@@ -6,6 +6,7 @@ import (
 	"github.com/1Panel-dev/1Panel/agent/app/api/v2/helper"
 	"github.com/1Panel-dev/1Panel/agent/app/dto"
 	"github.com/1Panel-dev/1Panel/agent/app/dto/request"
+	"github.com/1Panel-dev/1Panel/agent/global"
 	"github.com/1Panel-dev/1Panel/agent/i18n"
 	"github.com/1Panel-dev/1Panel/agent/utils/appicon"
 	"github.com/gin-gonic/gin"
@@ -42,6 +43,11 @@ func (b *BaseApi) SearchApp(c *gin.Context) {
 func (b *BaseApi) SyncApp(c *gin.Context) {
 	var req dto.OperateWithTask
 	if err := helper.CheckBindAndValidate(&req, c); err != nil {
+		return
+	}
+	if global.CONF.Base.IsOffline {
+		appService.SyncAppListFromLocal(req.TaskID)
+		helper.Success(c)
 		return
 	}
 	res, err := appService.GetAppUpdate()

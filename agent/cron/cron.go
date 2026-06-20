@@ -41,8 +41,10 @@ func Run() {
 	if _, err := global.Cron.AddJob("@daily", job.NewWebsiteJob()); err != nil {
 		global.LOG.Errorf("can not add  website corn job: %s", err.Error())
 	}
-	if _, err := global.Cron.AddJob("0 */6 * * *", job.NewSSLJob()); err != nil {
-		global.LOG.Errorf("can not add  ssl corn job: %s", err.Error())
+	if !global.CONF.Base.IsOffline {
+		if _, err := global.Cron.AddJob("0 */6 * * *", job.NewSSLJob()); err != nil {
+			global.LOG.Errorf("can not add ssl cron job: %s", err.Error())
+		}
 	}
 	minuteRand, err := rand.Int(rand.Reader, big.NewInt(60))
 	if err != nil {
@@ -54,11 +56,15 @@ func Run() {
 		global.LOG.Errorf("generate random hour failed: %v", err)
 		hourRand = big.NewInt(0)
 	}
-	if _, err := global.Cron.AddJob(fmt.Sprintf("%v %v * * *", minuteRand.Int64(), hourRand.Int64()), job.NewAppStoreJob()); err != nil {
-		global.LOG.Errorf("can not add  appstore corn job: %s", err.Error())
+	if !global.CONF.Base.IsOffline {
+		if _, err := global.Cron.AddJob(fmt.Sprintf("%v %v * * *", minuteRand.Int64(), hourRand.Int64()), job.NewAppStoreJob()); err != nil {
+			global.LOG.Errorf("can not add appstore cron job: %s", err.Error())
+		}
 	}
-	if _, err := global.Cron.AddJob("0 3 */31 * *", job.NewBackupJob()); err != nil {
-		global.LOG.Errorf("can not add  backup token refresh corn job: %s", err.Error())
+	if !global.CONF.Base.IsOffline {
+		if _, err := global.Cron.AddJob("0 3 */31 * *", job.NewBackupJob()); err != nil {
+			global.LOG.Errorf("can not add backup token refresh cron job: %s", err.Error())
+		}
 	}
 
 	var cronJobs []model.Cronjob
@@ -87,6 +93,10 @@ func Run() {
 }
 
 func syncBeforeStart() {
+	if global.CONF.Base.IsOffline {
+		global.LOG.Debug("skip NTP synchronization in offline mode")
+		return
+	}
 	var ntpSite model.Setting
 	if err := global.DB.Where("key = ?", "NtpSite").Find(&ntpSite).Error; err != nil {
 		global.LOG.Errorf("load ntp serve from db failed, err: %v", err)

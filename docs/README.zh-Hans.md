@@ -1,6 +1,45 @@
 <p align="center"><a href="https://1panel.cn"><img src="http://1panel.oss-cn-hangzhou.aliyuncs.com/img/1panel-logo.png" alt="1Panel" width="300" /></a></p>
 <p align="center"><b>Top-Rated Web-based Linux Server Management Tool</b></p>
-<p align="center"><b>现代化、开源的 Linux 服务器运维管理面板</b></p>
+<p align="center"><b>1Panel 社区版离线修改版</b></p>
+
+> [!IMPORTANT]
+> 本仓库是基于 [1Panel-dev/1Panel](https://github.com/1Panel-dev/1Panel)
+> 修改的非官方离线版本，由本仓库维护者独立维护，不属于 1Panel 官方发行版，
+> 也不由 FIT2CLOUD 或 1Panel 官方团队提供支持。离线版特有问题请提交到
+> [本仓库 Issues](https://github.com/Wisansiiz/1Panel-offline/issues)。
+
+该版本面向企业内网、离线机房和涉密环境。服务默认启用离线模式，不主动访问
+互联网；完整社区应用元数据随包提供，只有在主机中存在所需全部镜像时，对应
+应用才会在应用商店中显示并允许安装。
+
+## 离线修改内容
+
+- 禁用远程应用商店同步、在线升级、公共 NTP、在线文档索引、语言/GeoIP 下载和匿名安装统计；
+- 禁止 Docker 拉取镜像，Compose 使用 `--pull never` 启动；
+- 保留完整社区应用目录，并按本机已导入镜像动态显示可安装应用；
+- 自动构建 `linux/amd64` 与 `linux/arm64` 两种离线包；
+- systemd 服务仅允许访问本机和私有网络地址。
+
+内置镜像版本：
+
+| 应用 | x86_64 / amd64 | arm64 |
+|---|---|---|
+| OpenResty | `1.27.1.2-2-3-focal` | `1.27.1.2-2-3-focal` |
+| MySQL | `8.4.6`、`8.0.43`、`5.7.44`、`5.6.51` | `8.4.6`、`8.0.43` |
+
+## 自动构建与下载
+
+推送到 `dev-v2` 分支后，GitHub Actions 会自动构建两个架构，并保存为
+工作流 Artifact。推送 `offline-v*` 标签时还会自动创建 GitHub Release。
+由于离线包体积较大，Release 文件会被分片，下载后执行：
+
+```bash
+cat 1panel-offline-*.tar.gz.part-* > 1panel-offline.tar.gz
+tar -xzf 1panel-offline.tar.gz
+```
+
+完整构建、安装和外部镜像导入方法见
+[离线部署文档](../offline/README.md)。
 <p align="center">
   <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="1Panel-dev%2F1Panel | Trendshift" style="width: 180px; height: auto;" /></a>
   <a href="https://hellogithub.com/repository/71791baf930149ac9b84e1acf186573f" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=71791baf930149ac9b84e1acf186573f&claim_uid=p8vB3kP5CMrthiL&theme=dark&theme=neutral" alt="Featured｜HelloGitHub" style="width: 180px; height: auto;" /></a>
@@ -43,20 +82,19 @@
 - **安全可靠**：基于容器管理并部署应用，实现最小的漏洞暴露面，同时提供病毒防护、防火墙和日志审计等功能；
 - **一键备份**：支持一键备份和恢复，用户可以将数据备份到各类云端存储介质，永不丢失。
 
-## 快速开始
+## 离线快速开始
 
-**一键安装**
-
-执行如下命令一键安装 1Panel:
+在有网络的机器下载对应架构的 Artifact 或 Release，传输到离线服务器后执行：
 
 ```sh
-curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
+tar -xzf 1panel-offline-*-linux-amd64.tar.gz
+cd 1panel-offline-*-linux-amd64
+sudo ./install.sh
 ```
-
-如果是用于离线环境，推荐使用 [安装包方式](https://1panel.cn/docs/installation/package_installation/) 进行安装部署。
 
 **学习资料**
 
+- [本修改版离线部署说明](../offline/README.md)
 - [在线文档](https://1panel.cn/docs/)
 - [社区论坛](https://bbs.fit2cloud.com/c/1p/7)
 - [如何加入微信交流群?](https://bbs.fit2cloud.com/t/topic/2147)

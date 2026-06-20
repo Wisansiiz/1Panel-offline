@@ -79,8 +79,8 @@ type LocalAppInstallDefine struct {
 }
 
 type ExtraProperties struct {
-	Tags    []Tag  `json:"tags"`
-	Version string `json:"version"`
+	Tags    []Tag  `json:"tags" yaml:"tags"`
+	Version string `json:"version" yaml:"version"`
 }
 
 type AppProperty struct {
@@ -115,10 +115,10 @@ type AppConfigVersion struct {
 }
 
 type Tag struct {
-	Key     string `json:"key"`
-	Name    string `json:"name"`
-	Sort    int    `json:"sort"`
-	Locales Locale `json:"locales"`
+	Key     string `json:"key" yaml:"key"`
+	Name    string `json:"name" yaml:"name"`
+	Sort    int    `json:"sort" yaml:"sort"`
+	Locales Locale `json:"locales" yaml:"locales"`
 }
 
 type Locale struct {

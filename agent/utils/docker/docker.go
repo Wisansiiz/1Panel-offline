@@ -194,6 +194,9 @@ func setLog(id, newLastLine string, task *task.Task) error {
 }
 
 func (c Client) PullImageWithProcessAndOptions(task *task.Task, imageName string, options image.PullOptions) error {
+	if global.CONF.Base.IsOffline {
+		return fmt.Errorf("image pull is disabled in offline mode: %s", imageName)
+	}
 	out, err := c.cli.ImagePull(context.Background(), imageName, options)
 	if err != nil {
 		return err
@@ -333,6 +336,9 @@ func logProcess(progress map[string]interface{}, task *task.Task) {
 }
 
 func PullImage(imageName string) error {
+	if global.CONF.Base.IsOffline {
+		return fmt.Errorf("image pull is disabled in offline mode: %s", imageName)
+	}
 	cli, err := NewDockerClient()
 	if err != nil {
 		return err

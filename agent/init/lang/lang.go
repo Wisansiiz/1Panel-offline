@@ -24,6 +24,10 @@ func initLang() {
 	if isLangExist && isGeoExist {
 		return
 	}
+	if global.CONF.Base.IsOffline {
+		global.LOG.Warn("language or GeoIP resources are missing; remote download is disabled in offline mode")
+		return
+	}
 	upgradePath := path.Join(global.CONF.Base.InstallDir, "1panel/tmp/upgrade")
 	tmpPath, err := loadRestorePath(upgradePath)
 	upgradeDir := path.Join(upgradePath, tmpPath, "downloads")

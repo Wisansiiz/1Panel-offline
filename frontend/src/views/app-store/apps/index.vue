@@ -179,7 +179,9 @@ const sync = async () => {
     };
     try {
         let res;
-        if ((isOffline.value && !isEnterprise.value) || (isProductPro.value && syncCustomAppstore.value)) {
+        if (isOffline.value) {
+            res = await syncLocalApp(syncReq);
+        } else if (isProductPro.value && syncCustomAppstore.value) {
             res = await syncCutomAppStore(syncReq);
         } else {
             res = await syncApp(syncReq);
@@ -246,7 +248,7 @@ onMounted(async () => {
             syncCustomAppstore.value = customAppStoreEnabled.value;
         }
     } else {
-        syncCustomAppstore.value = isOffline.value;
+        syncCustomAppstore.value = false;
     }
     mainHeight.value = window.innerHeight - 380;
     window.onresize = () => {

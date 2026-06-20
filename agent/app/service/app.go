@@ -69,6 +69,13 @@ func NewIAppService() IAppService {
 func (a AppService) PageApp(ctx *gin.Context, req request.AppSearch) (*response.AppRes, error) {
 	var opts []repo.DBOption
 	opts = append(opts, appRepo.OrderByRecommend())
+	if global.CONF.Base.IsOffline {
+		availableIDs, err := a.offlineAvailableAppIDs()
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, repo.WithByIDs(availableIDs))
+	}
 	if req.Name != "" {
 		opts = append(opts, appRepo.WithByLikeName(strings.TrimSpace(req.Name)))
 	}
@@ -300,6 +307,9 @@ func (a AppService) GetAppDetail(appID uint, version, appType string) (response.
 	}
 
 	if appDetailDTO.DockerCompose == "" {
+		if global.CONF.Base.IsOffline {
+			return appDetailDTO, buserr.WithName("ErrFileNotFound", "docker-compose.yml")
+		}
 		filename := filepath.Base(appDetailDTO.DownloadUrl)
 		dockerComposeUrl := fmt.Sprintf("%s%s", strings.TrimSuffix(appDetailDTO.DownloadUrl, filename), "docker-compose.yml")
 		statusCode, composeRes, err := req_helper.HandleRequest(dockerComposeUrl, http.MethodGet, constant.TimeOut20s)
@@ -425,6 +435,9 @@ func (a AppService) installWithHooks(req request.AppInstallCreate, executeScript
 		}
 	} else {
 		if appDetail.DockerCompose == "" {
+			if global.CONF.Base.IsOffline {
+				return nil, buserr.WithName("ErrFileNotFound", "docker-compose.yml")
+			}
 			dockerComposeUrl := fmt.Sprintf("%s/%s/1panel/%s/%s/docker-compose.yml", global.AppRepoURL(), global.CONF.Base.Mode, app.Key, appDetail.Version)
 			_, composeRes, err = req_helper.HandleRequest(dockerComposeUrl, http.MethodGet, constant.TimeOut20s)
 			if err != nil {
@@ -609,6 +622,27 @@ func (a AppService) SyncAppListFromLocal(TaskID string) {
 	syncTask.AddSubTask(task.GetTaskName(i18n.GetMsgByKey("LocalApp"), task.TaskSync, task.TaskScopeAppStore), func(t *task.Task) (err error) {
 		fileOp := files.NewFileOp()
 		localAppDir := global.Dir.LocalAppResourceDir
+		appResource := constant.AppResourceLocal
+		if global.CONF.Base.IsOffline {
+			localAppDir = global.Dir.RemoteAppResourceDir
+			appResource = constant.AppResourceRemote
+			catalogDataPath := filepath.Join(global.Dir.OfflineAppResourceDir, "data.yaml")
+			if fileOp.Stat(catalogDataPath) {
+				var catalog struct {
+					Extra dto.ExtraProperties `yaml:"additionalProperties"`
+				}
+				catalogData, readErr := fileOp.GetContent(catalogDataPath)
+				if readErr != nil {
+					return readErr
+				}
+				if err = yaml.Unmarshal(catalogData, &catalog); err != nil {
+					return err
+				}
+				if err = SyncTags(catalog.Extra); err != nil {
+					return err
+				}
+			}
+		}
 		if !fileOp.Stat(localAppDir) {
 			return nil
 		}
@@ -667,7 +701,7 @@ func (a AppService) SyncAppListFromLocal(TaskID string) {
 			appTags []*model.AppTag
 		)
 
-		oldApps, _ := appRepo.GetBy(appRepo.WithResource(constant.AppResourceLocal))
+		oldApps, _ := appRepo.GetBy(appRepo.WithResource(appResource))
 		apps := make(map[string]model.App, len(oldApps))
 		for _, old := range oldApps {
 			old.Status = constant.AppTakeDown
@@ -696,7 +730,9 @@ func (a AppService) SyncAppListFromLocal(TaskID string) {
 					app.Details = append(app.Details, v)
 				}
 			}
-			app.TagsKey = append(app.TagsKey, constant.AppResourceLocal)
+			if !global.CONF.Base.IsOffline {
+				app.TagsKey = append(app.TagsKey, constant.AppResourceLocal)
+			}
 			apps[app.Key] = app
 		}
 
@@ -828,6 +864,9 @@ func (a AppService) SyncAppListFromLocal(TaskID string) {
 func (a AppService) GetAppUpdate() (*response.AppUpdateRes, error) {
 	res := &response.AppUpdateRes{
 		CanUpdate: false,
+	}
+	if global.CONF.Base.IsOffline {
+		return res, nil
 	}
 	mysql, _ := appRepo.GetFirst(appRepo.WithKey("mysql"))
 	if !mysql.BatchInstallSupport {
@@ -966,6 +1005,10 @@ func deleteCustomApp() {
 }
 
 func (a AppService) SyncAppListFromRemote(taskID string) (err error) {
+	if global.CONF.Base.IsOffline {
+		a.SyncAppListFromLocal(taskID)
+		return nil
+	}
 	if xpack.MultiNodeProvider.IsUseCustomApp() {
 		return nil
 	}

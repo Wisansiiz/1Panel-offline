@@ -1,0 +1,132 @@
+name: Build Offline Edition
+
+on:
+  push:
+    branches:
+      - dev-v2
+    tags:
+      - "offline-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Bundle version, for example offline-v2.0.0"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: offline-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: version
+        name: Resolve bundle version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME}"
+          elif [[ -n "${{ inputs.version }}" ]]; then
+            version="${{ inputs.version }}"
+          else
+            source_version="$(awk '/^[[:space:]]*version:/ {print $2; exit}' core/cmd/server/conf/app.yaml)"
+            version="${source_version}-build.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "value=${version}" >> "${GITHUB_OUTPUT}"
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet
+          docker system prune --all --force
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: agent/go.mod
+          cache-dependency-path: |
+            agent/go.sum
+            core/go.sum
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build ${{ matrix.arch }} offline bundle
+        env:
+          BUILD_VERSION: ${{ needs.prepare.outputs.version }}
+        run: ./offline/build-bundle.sh "${{ matrix.arch }}"
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 1panel-offline-${{ needs.prepare.outputs.version }}-linux-${{ matrix.arch }}
+          path: dist/offline/*.tar.gz
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/offline-v')
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 1panel-offline-${{ needs.prepare.outputs.version }}-linux-*
+          path: release
+          merge-multiple: true
+
+      - name: Split large release assets
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          while IFS= read -r bundle; do
+            name="$(basename "${bundle}")"
+            split -b 1900M -d -a 2 "${bundle}" "release-assets/${name}.part-"
+          done < <(find release -type f -name '*.tar.gz' | sort)
+          (
+            cd release-assets
+            sha256sum ./*.part-* > SHA256SUMS
+          )
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 1Panel Offline ${{ needs.prepare.outputs.version }}
+          generate_release_notes: true
+          body: |
+            非官方 1Panel 社区版离线修改版。
+
+            下载对应架构的所有 `.part-*` 文件后执行：
+
+            ```bash
+            cat 1panel-offline-*.tar.gz.part-* > 1panel-offline.tar.gz
+            sha256sum -c SHA256SUMS
+            tar -xzf 1panel-offline.tar.gz
+            ```
+          files: |
+            release-assets/*

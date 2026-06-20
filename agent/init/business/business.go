@@ -21,6 +21,7 @@ func Init() {
 
 func syncApp() {
 	if global.CONF.Base.IsOffline {
+		service.NewIAppService().SyncAppListFromLocal("")
 		return
 	}
 	setting, err := service.NewISettingService().GetSettingInfo()

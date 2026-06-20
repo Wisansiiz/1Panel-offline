@@ -44,6 +44,10 @@ func Up(filePath string) (string, error) {
 	}
 	base, extra := getComposeBaseCmd()
 	args := append(extra, loadFiles(filePath)...)
+	if global.CONF.Base.IsOffline {
+		args = append(args, "up", "-d", "--pull", "never")
+		return cmd.NewCommandMgr(cmd.WithTimeout(20*time.Minute)).RunWithStdout(base, args...)
+	}
 	args = append(args, "up", "-d")
 	return cmd.NewCommandMgr(cmd.WithTimeout(20*time.Minute)).RunWithStdout(base, args...)
 }
@@ -54,6 +58,10 @@ func UpWithTask(filePath string, task *task.Task, forcePull bool) error {
 	}
 	base, extra := getComposeBaseCmd()
 	args := append(extra, loadFiles(filePath)...)
+	if global.CONF.Base.IsOffline {
+		args = append(args, "up", "-d", "--pull", "never")
+		return cmd.NewCommandMgr(cmd.WithTask(*task), cmd.WithTimeout(20*time.Minute)).Run(base, args...)
+	}
 	args = append(args, "up", "-d")
 	return cmd.NewCommandMgr(cmd.WithTask(*task), cmd.WithTimeout(20*time.Minute)).Run(base, args...)
 }
@@ -79,6 +87,9 @@ func pullComposeImages(filePath string, forcePull bool, task *task.Task) error {
 				}
 				continue
 			}
+		}
+		if global.CONF.Base.IsOffline {
+			return fmt.Errorf("image %s is not available locally in offline mode", image)
 		}
 
 		if task != nil {

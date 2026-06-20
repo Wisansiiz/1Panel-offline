@@ -1,10 +1,55 @@
 <p align="center"><a href="https://1panel.pro"><img src="https://resource.1panel.pro/img/1panel-logo.png" alt="1Panel" width="300" /></a></p>
 
-<h3 align="center">The open-source VPS control panel with native AI agent support</h3>
+<h3 align="center">1Panel Offline Community Edition (Modified Fork)</h3>
 
-<p align="center">
-  Trusted by <strong>2,000,000+</strong> self-hosters worldwide
-</p>
+> [!IMPORTANT]
+> This repository is an independently maintained, modified fork of
+> [1Panel-dev/1Panel](https://github.com/1Panel-dev/1Panel). It is not an
+> official 1Panel release and is not maintained or supported by FIT2CLOUD or
+> the upstream 1Panel team. Issues specific to this offline edition should be
+> reported in this repository.
+
+This edition is designed for enterprise intranets, isolated data centers and
+other air-gapped environments. Runtime services default to offline mode and
+block automatic internet access. The complete community application catalog
+is packaged locally, while applications become installable only after all
+required container images exist on the host.
+
+[中文说明](docs/README.zh-Hans.md) · [Offline build and deployment guide](offline/README.md)
+
+## Offline edition changes
+
+- Disables remote app-store synchronization, online upgrades, public NTP,
+  online documentation indexes, language/GeoIP downloads and anonymous
+  installation analytics.
+- Prevents Docker image pulls and starts Compose projects with `--pull never`.
+- Includes the full community app metadata while dynamically showing apps
+  whose images have been imported.
+- Builds reproducible `linux/amd64` and `linux/arm64` offline bundles.
+- Installs systemd network restrictions that only permit loopback and private
+  network ranges.
+
+Prepackaged images:
+
+| Application | amd64 | arm64 |
+|---|---|---|
+| OpenResty | `1.27.1.2-2-3-focal` | `1.27.1.2-2-3-focal` |
+| MySQL | `8.4.6`, `8.0.43`, `5.7.44`, `5.6.51` | `8.4.6`, `8.0.43` |
+
+## Downloads and automated builds
+
+Every push to `dev-v2` builds both architectures in GitHub Actions and stores
+them as workflow artifacts. Tags matching `offline-v*` additionally create a
+GitHub Release. Large release bundles are split into parts; concatenate them
+before extracting:
+
+```bash
+cat 1panel-offline-*.tar.gz.part-* > 1panel-offline.tar.gz
+tar -xzf 1panel-offline.tar.gz
+```
+
+See [the offline guide](offline/README.md) for local builds, installation and
+external image import instructions.
 
 <p align="center">
   <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="1Panel-dev%2F1Panel | Trendshift" style="width: 240px; height: auto;" /></a>
@@ -39,7 +84,9 @@
 
 ## What is 1Panel?
 
-1Panel is a modern, open-source VPS control panel — and the only one with **native AI agent support**. Run Ollama models, deploy OpenClaw agents, and manage your entire server stack from one clean web interface. No CLI memorization required.
+The upstream 1Panel project is a modern, open-source VPS control panel with
+native AI agent support. This fork preserves the community features and adapts
+their deployment path for fully offline environments.
 
 👉 Watch the [2-minute introduction](https://www.youtube.com/watch?v=Jl_wqp-XA08)
 
@@ -63,13 +110,15 @@
 - **Security Out of the Box**: Firewall rules, fail2ban, container isolation, WAF, and audit logs — configured and running from day one.
 - **Backup & Restore**: Schedule automated backups to AWS S3, Cloudflare R2, or local storage. Restore any snapshot in one click.
 
-## Quick Start
+## Offline quick start
 
-> **Requirements:** Linux VPS (Debian / Ubuntu / CentOS / Rocky), 1 GB RAM, internet access.  
-> Takes ~60 seconds.
+Download the matching Actions artifact or GitHub Release on an internet-connected
+machine, transfer it to the isolated Linux server, then run:
 
 ```bash
-bash -c "$(curl -sSL https://resource.1panel.pro/v2/quick_start.sh)"
+tar -xzf 1panel-offline-*-linux-amd64.tar.gz
+cd 1panel-offline-*-linux-amd64
+sudo ./install.sh
 ```
 
 After installation, open `http://<your-server-ip>:<port>/<security-path>` in your browser.  
@@ -102,9 +151,10 @@ Run `1pctl user-info` via SSH if you need to retrieve your access credentials.
 
 ## Community & Support
 
+- **Offline fork issues** — [Wisansiiz/1Panel-offline](https://github.com/Wisansiiz/1Panel-offline/issues)
 - **Discord** — [Join the community](https://discord.gg/bUpUqWqdRr) for help, feature requests, and show-and-tell
 - **Docs** — [1panel.pro/docs](https://1panel.pro/docs)
-- **Issues** — [GitHub Issues](https://github.com/1Panel-dev/1Panel/issues) for bug reports
+- **Upstream issues** — [1Panel-dev/1Panel](https://github.com/1Panel-dev/1Panel/issues)
 
 ## Security
 

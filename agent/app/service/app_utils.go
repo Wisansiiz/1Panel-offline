@@ -1027,6 +1027,9 @@ func downloadApp(app model.App, appDetail model.AppDetail, appInstall *model.App
 	if app.IsLocalApp() || app.IsCustomApp() {
 		return nil
 	}
+	if global.CONF.Base.IsOffline {
+		return buserr.WithName("ErrFileNotFound", path.Join(app.GetAppResourcePath(), appDetail.Version))
+	}
 	appResourceDir := path.Join(global.Dir.AppResourceDir, app.Resource)
 	appDownloadDir := app.GetAppResourcePath()
 	appVersionDir := path.Join(appDownloadDir, appDetail.Version)
@@ -1500,6 +1503,12 @@ func handleLocalApp(appDir string) (app *model.App, err error) {
 	app.Resource = constant.AppResourceLocal
 	app.Status = constant.AppNormal
 	app.Recommend = 9999
+	if global.CONF.Base.IsOffline {
+		app.Key = appDefine.Key
+		app.Resource = constant.AppResourceRemote
+		app.Recommend = appDefine.Recommend
+		app.TagsKey = appDefine.Tags
+	}
 	readMeByte, err := fileOp.GetContent(path.Join(appDir, "README.md"))
 	if err == nil {
 		app.ReadMe = string(readMeByte)

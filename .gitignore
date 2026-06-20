@@ -63,6 +63,7 @@ dist/
 1pctl
 1panel.service
 install.sh
+!offline/install.sh
 quick_start.sh
 cmd/server/fileList.txt
 .fileList.txt

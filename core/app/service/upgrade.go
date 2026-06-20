@@ -130,6 +130,9 @@ func (u *UpgradeService) SearchUpgrade() (*dto.UpgradeInfo, error) {
 }
 
 func (u *UpgradeService) LoadNotes(req dto.Upgrade) (string, error) {
+	if global.CONF.Base.IsOffline {
+		return "", nil
+	}
 	mode := global.CONF.Base.Mode
 	if strings.Contains(req.Version, "beta") {
 		mode = "beta"
@@ -142,6 +145,9 @@ func (u *UpgradeService) LoadNotes(req dto.Upgrade) (string, error) {
 }
 
 func (u *UpgradeService) Upgrade(req dto.Upgrade) error {
+	if global.CONF.Base.IsOffline {
+		return buserr.New("ErrNotSupport")
+	}
 	global.LOG.Info("start to upgrade now...")
 	itemArch, err := loadArch()
 	if err != nil {
@@ -296,6 +302,9 @@ type noteDetailHelper struct {
 }
 
 func (u *UpgradeService) LoadRelease() ([]dto.ReleasesNotes, error) {
+	if global.CONF.Base.IsOffline {
+		return []dto.ReleasesNotes{}, nil
+	}
 	docSource, _ := settingRepo.GetValueByKey("DocSource")
 	lang, _ := settingRepo.GetValueByKey("Language")
 	var notes []dto.ReleasesNotes

@@ -41,6 +41,8 @@ offline/catalog/data.yaml
 
 输出位于 `dist/offline/`。构建机需要 Node.js、Go、Docker，并允许访问 npm、Go modules 和镜像仓库。
 
+同一架构的全部内置镜像会合并保存为 `images/images.tar`。Docker 的共享镜像层只写入一次，避免按镜像分别导出时重复占用离线包空间。`images/images.txt` 记录该包内包含的完整镜像列表。
+
 也可以直接使用 GitHub Actions：
 
 - 推送到 `dev-v2`：生成 amd64、arm64 Artifact 并创建正式 Release；
@@ -62,7 +64,7 @@ cd 1panel-offline-linux-amd64
 sudo ./install.sh
 ```
 
-安装程序会校验文件、安装 core/agent、复制本地应用目录、自动执行 `docker image load`，并启动 systemd 服务。
+安装程序会校验文件、安装 core/agent、复制本地应用目录、一次性导入 `images/images.tar`，并启动 systemd 服务。
 
 ## 导入其他应用镜像
 

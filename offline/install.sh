@@ -133,11 +133,13 @@ IPAddressAllow=fe80::/10
 WantedBy=multi-user.target
 EOF
 
-for archive in "${PACKAGE_DIR}"/images/*.tar; do
-    [[ -e "${archive}" ]] || continue
-    echo "importing $(basename "${archive}")"
-    docker image load -i "${archive}"
-done
+IMAGE_ARCHIVE="${PACKAGE_DIR}/images/images.tar"
+if [[ ! -f "${IMAGE_ARCHIVE}" ]]; then
+    echo "missing bundled image archive: ${IMAGE_ARCHIVE}" >&2
+    exit 1
+fi
+echo "importing bundled application images"
+docker image load -i "${IMAGE_ARCHIVE}"
 
 systemctl daemon-reload
 systemctl enable --now 1panel-agent 1panel-core

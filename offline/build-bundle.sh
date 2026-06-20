@@ -74,13 +74,22 @@ else
     exit 1
 fi
 
+IMAGES=()
 while IFS=$'\t' read -r image_arch image; do
     [[ -z "${image_arch}" || "${image_arch}" == \#* || "${image_arch}" != "${ARCH}" ]] && continue
-    safe_name="$(printf '%s' "${image}" | tr '/:' '__')"
     echo "packing ${image} for linux/${ARCH}"
     docker pull --platform "linux/${ARCH}" "${image}"
-    docker image save -o "${IMAGE_DIR}/${safe_name}.tar" "${image}"
+    IMAGES+=("${image}")
 done < "${ROOT_DIR}/offline/images.tsv"
+
+if [[ "${#IMAGES[@]}" -eq 0 ]]; then
+    echo "no bundled images configured for architecture: ${ARCH}" >&2
+    exit 1
+fi
+
+printf '%s\n' "${IMAGES[@]}" > "${IMAGE_DIR}/images.txt"
+echo "saving ${#IMAGES[@]} images into one archive so shared layers are stored once"
+docker image save -o "${IMAGE_DIR}/images.tar" "${IMAGES[@]}"
 
 cp "${ROOT_DIR}/offline/install.sh" "${WORK_DIR}/install.sh"
 cp "${ROOT_DIR}/offline/images.tsv" "${WORK_DIR}/images.tsv"
@@ -98,3 +107,4 @@ chmod +x "${WORK_DIR}/install.sh"
 
 tar -C "${OUTPUT_DIR}" -czf "${WORK_DIR}.tar.gz" "$(basename "${WORK_DIR}")"
 echo "created ${WORK_DIR}.tar.gz"
+du -h "${IMAGE_DIR}/images.tar" "${WORK_DIR}.tar.gz"

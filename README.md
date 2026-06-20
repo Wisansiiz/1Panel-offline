@@ -39,12 +39,12 @@ Prepackaged images:
 ## Downloads and automated builds
 
 Every push to `dev-v2` builds both architectures and creates a GitHub
-pre-release. Tags matching `offline-v*` create a normal GitHub Release.
-Large release bundles are split into parts; concatenate them before extracting:
+Release. Tags matching `offline-v*` can be used to publish a named version.
+Each architecture is provided as a directly downloadable `.tar.gz`:
 
 ```bash
-cat 1panel-offline-*.tar.gz.part-* > 1panel-offline.tar.gz
-tar -xzf 1panel-offline.tar.gz
+sha256sum -c SHA256SUMS
+tar -xzf 1panel-offline-*-linux-amd64.tar.gz
 ```
 
 See [the offline guide](offline/README.md) for local builds, installation and

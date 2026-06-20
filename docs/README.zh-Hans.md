@@ -29,13 +29,12 @@
 
 ## 自动构建与下载
 
-推送到 `dev-v2` 分支后，GitHub Actions 会自动构建两个架构并创建
-GitHub 预发布版本。推送 `offline-v*` 标签时会创建正式 GitHub Release。
-由于离线包体积较大，Release 文件会被分片，下载后执行：
+推送到 `dev-v2` 分支后，GitHub Actions 会自动构建两个架构并创建正式
+GitHub Release。每个架构直接提供一个 `.tar.gz` 下载文件：
 
 ```bash
-cat 1panel-offline-*.tar.gz.part-* > 1panel-offline.tar.gz
-tar -xzf 1panel-offline.tar.gz
+sha256sum -c SHA256SUMS
+tar -xzf 1panel-offline-*-linux-amd64.tar.gz
 ```
 
 完整构建、安装和外部镜像导入方法见

@@ -99,17 +99,12 @@ jobs:
           path: release
           merge-multiple: true
 
-      - name: Split large release assets
+      - name: Generate release checksums
         shell: bash
         run: |
-          mkdir -p release-assets
-          while IFS= read -r bundle; do
-            name="$(basename "${bundle}")"
-            split -b 1900M -d -a 2 "${bundle}" "release-assets/${name}.part-"
-          done < <(find release -type f -name '*.tar.gz' | sort)
           (
-            cd release-assets
-            sha256sum ./*.part-* > SHA256SUMS
+            cd release
+            sha256sum ./*.tar.gz > SHA256SUMS
           )
 
       - name: Publish GitHub Release
@@ -117,17 +112,17 @@ jobs:
         with:
           tag_name: ${{ needs.prepare.outputs.version }}
           name: 1Panel Offline ${{ needs.prepare.outputs.version }}
-          prerelease: ${{ !startsWith(github.ref, 'refs/tags/offline-v') }}
+          prerelease: false
           generate_release_notes: true
           body: |
             非官方 1Panel 社区版离线修改版。
 
-            下载对应架构的所有 `.part-*` 文件后执行：
+            下载对应架构的 `.tar.gz` 文件后执行：
 
             ```bash
-            cat 1panel-offline-*.tar.gz.part-* > 1panel-offline.tar.gz
             sha256sum -c SHA256SUMS
-            tar -xzf 1panel-offline.tar.gz
+            tar -xzf 1panel-offline-*-linux-amd64.tar.gz
             ```
           files: |
-            release-assets/*
+            release/*.tar.gz
+            release/SHA256SUMS

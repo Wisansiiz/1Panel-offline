@@ -43,15 +43,15 @@ offline/catalog/data.yaml
 
 也可以直接使用 GitHub Actions：
 
-- 推送到 `dev-v2`：生成 amd64、arm64 Artifact 并创建预发布版本；
+- 推送到 `dev-v2`：生成 amd64、arm64 Artifact 并创建正式 Release；
 - 推送 `offline-v*` 标签：自动创建 Release；
 - Actions 页面支持手动指定构建版本。
 
-Release 中的大文件会被拆分为 `.part-*`，恢复方式：
+Release 中每个架构直接提供一个 `.tar.gz` 文件：
 
 ```bash
-cat 1panel-offline-*.tar.gz.part-* > 1panel-offline.tar.gz
 sha256sum -c SHA256SUMS
+tar -xzf 1panel-offline-*-linux-amd64.tar.gz
 ```
 
 ## 离线服务器安装

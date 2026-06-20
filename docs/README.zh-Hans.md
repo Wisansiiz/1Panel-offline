@@ -29,8 +29,8 @@
 
 ## 自动构建与下载
 
-推送到 `dev-v2` 分支后，GitHub Actions 会自动构建两个架构，并保存为
-工作流 Artifact。推送 `offline-v*` 标签时还会自动创建 GitHub Release。
+推送到 `dev-v2` 分支后，GitHub Actions 会自动构建两个架构并创建
+GitHub 预发布版本。推送 `offline-v*` 标签时会创建正式 GitHub Release。
 由于离线包体积较大，Release 文件会被分片，下载后执行：
 
 ```bash

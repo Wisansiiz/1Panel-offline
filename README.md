@@ -38,10 +38,9 @@ Prepackaged images:
 
 ## Downloads and automated builds
 
-Every push to `dev-v2` builds both architectures in GitHub Actions and stores
-them as workflow artifacts. Tags matching `offline-v*` additionally create a
-GitHub Release. Large release bundles are split into parts; concatenate them
-before extracting:
+Every push to `dev-v2` builds both architectures and creates a GitHub
+pre-release. Tags matching `offline-v*` create a normal GitHub Release.
+Large release bundles are split into parts; concatenate them before extracting:
 
 ```bash
 cat 1panel-offline-*.tar.gz.part-* > 1panel-offline.tar.gz

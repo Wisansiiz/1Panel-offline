@@ -43,7 +43,7 @@ offline/catalog/data.yaml
 
 也可以直接使用 GitHub Actions：
 
-- 推送到 `dev-v2`：生成 amd64、arm64 工作流 Artifact；
+- 推送到 `dev-v2`：生成 amd64、arm64 Artifact 并创建预发布版本；
 - 推送 `offline-v*` 标签：自动创建 Release；
 - Actions 页面支持手动指定构建版本。
 

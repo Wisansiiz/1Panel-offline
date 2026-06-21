@@ -84,6 +84,9 @@ func LoadMenus() string {
 		{ID: "12", Disabled: false, Title: "menu.logs", IsShow: true, Label: "Log-Menu", Path: "/logs", Sort: 1200},
 		{ID: "13", Disabled: true, Title: "menu.settings", IsShow: true, Label: "Setting-Menu", Path: "/settings", Sort: 1300},
 	}
+	if global.CONF.Base.IsOffline {
+		item = RemoveMenuByLabel(item, "AI-Menu")
+	}
 	if global.CONF.Base.IsEnterprise {
 		for i := range item {
 			if item[i].Label == "AI-Menu" {
@@ -142,6 +145,17 @@ func LoadMenus() string {
 	}
 	menu, _ := json.Marshal(item)
 	return string(menu)
+}
+
+func RemoveMenuByLabel(menus []dto.ShowMenu, label string) []dto.ShowMenu {
+	filtered := make([]dto.ShowMenu, 0, len(menus))
+	for _, menu := range menus {
+		if menu.Label == label {
+			continue
+		}
+		filtered = append(filtered, menu)
+	}
+	return filtered
 }
 
 func MenuSort() []dto.MenuLabelSort {

@@ -89,6 +89,8 @@ jobs:
           test ! -e frontend/src/routers/modules/ai.ts
           test ! -e agent/router/ro_ai.go
           ! grep -q 'AIToolsRouter' agent/router/common.go
+          grep -q "if (isOffline)" frontend/src/utils/runtime-app-resource.ts
+          grep -q "return 'remote'" frontend/src/utils/runtime-app-resource.ts
 
       - name: Build ${{ matrix.arch }} offline bundle
         env:
@@ -106,6 +108,8 @@ jobs:
           test -x "${bundle}/runtime/docker/containerd"
           test -x "${bundle}/runtime/docker/runc"
           test -x "${bundle}/runtime/cli-plugins/docker-compose"
+          ! grep -Rqs '/ai/agents' core/cmd/server/web/assets/js
+          ! grep -Rqs '/ai/model/account' core/cmd/server/web/assets/js
           test -x "${bundle}/uninstall.sh"
           "${bundle}/uninstall.sh" --help >/dev/null
           test -s "${bundle}/images/images.tar"

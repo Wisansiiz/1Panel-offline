@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"github.com/1Panel-dev/1Panel/agent/app/model"
 	"github.com/1Panel-dev/1Panel/agent/global"
 	"github.com/1Panel-dev/1Panel/agent/init/migration/migrations"
 
@@ -92,6 +93,11 @@ func InitAgentDB() {
 	if err := m.Migrate(); err != nil {
 		global.LOG.Error(err)
 		panic(err)
+	}
+	if global.CONF.Base.IsOffline {
+		if err := global.DB.Where("name = ?", "Agent").Delete(&model.QuickJump{}).Error; err != nil {
+			global.LOG.Errorf("remove offline AI Agent quick jump failed: %v", err)
+		}
 	}
 }
 

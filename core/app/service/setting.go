@@ -28,6 +28,7 @@ import (
 	"github.com/1Panel-dev/1Panel/core/constant"
 	"github.com/1Panel-dev/1Panel/core/global"
 	"github.com/1Panel-dev/1Panel/core/i18n"
+	migrationHelper "github.com/1Panel-dev/1Panel/core/init/migration/helper"
 	"github.com/1Panel-dev/1Panel/core/utils/common"
 	"github.com/1Panel-dev/1Panel/core/utils/controller"
 	"github.com/1Panel-dev/1Panel/core/utils/encrypt"
@@ -83,6 +84,9 @@ func (u *SettingService) GetSettingInfo() (*dto.SettingInfo, error) {
 	if hideMenu, ok := settingMap["HideMenu"]; ok && len(hideMenu) > 0 {
 		var menus []dto.ShowMenu
 		if err := json.Unmarshal([]byte(hideMenu), &menus); err == nil {
+			if global.CONF.Base.IsOffline {
+				menus = migrationHelper.RemoveMenuByLabel(menus, "AI-Menu")
+			}
 			sortShowMenus(menus)
 			if sortedBytes, err := json.Marshal(menus); err == nil {
 				settingMap["HideMenu"] = string(sortedBytes)
@@ -122,6 +126,9 @@ func (u *SettingService) GetSettingBaseInfo() (*dto.SettingBaseInfo, error) {
 	if hideMenu, ok := settingMap["HideMenu"]; ok && len(hideMenu) > 0 {
 		var menus []dto.ShowMenu
 		if err := json.Unmarshal([]byte(hideMenu), &menus); err == nil {
+			if global.CONF.Base.IsOffline {
+				menus = migrationHelper.RemoveMenuByLabel(menus, "AI-Menu")
+			}
 			sortShowMenus(menus)
 			if sortedBytes, err := json.Marshal(menus); err == nil {
 				settingMap["HideMenu"] = string(sortedBytes)

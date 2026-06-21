@@ -1,3 +1,6 @@
 export const resolveRuntimeAppResource = (isOffline: boolean, customAppStatus?: string) => {
-    return isOffline || customAppStatus?.toLowerCase() === 'enable' ? 'custom' : 'remote';
+    if (isOffline) {
+        return 'remote';
+    }
+    return customAppStatus?.toLowerCase() === 'enable' ? 'custom' : 'remote';
 };

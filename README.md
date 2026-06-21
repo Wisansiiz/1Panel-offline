@@ -41,8 +41,10 @@ Bundled runtime: Docker Engine `29.6.0` and Docker Compose `2.40.3`.
 
 ## Downloads and automated builds
 
-Every push to `dev-v2` builds both architectures and creates a GitHub
-Release. Tags matching `offline-v*` can be used to publish a named version.
+Every push to `dev-v2` builds both architectures and creates or updates the
+GitHub Release configured by `OFFLINE_VERSION` in the workflow. Manual builds
+accept an `x.y.z` version such as `2.0.1`; tags matching `offline-v*` are also
+normalized to the same `x.y.z` release format.
 Each architecture is provided as a directly downloadable `.tar.gz`:
 
 ```bash

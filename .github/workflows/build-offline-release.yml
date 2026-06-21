@@ -1,5 +1,8 @@
 name: Build Offline Edition
 
+env:
+  OFFLINE_VERSION: "2.0.1"
+
 on:
   push:
     branches:
@@ -9,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Bundle version, for example offline-v2.0.0"
+        description: "Bundle version, for example 2.0.1"
         required: false
         type: string
 
@@ -37,9 +40,16 @@ jobs:
           elif [[ -n "${{ inputs.version }}" ]]; then
             version="${{ inputs.version }}"
           else
-            source_version="$(awk '/^[[:space:]]*version:/ {print $2; exit}' core/cmd/server/conf/app.yaml)"
-            version="${source_version}-build.${GITHUB_RUN_NUMBER}"
+            version="${OFFLINE_VERSION}"
           fi
+
+          version="${version#offline-v}"
+          version="${version#v}"
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "invalid offline version: ${version}; expected x.y.z" >&2
+            exit 1
+          fi
+
           echo "value=${version}" >> "${GITHUB_OUTPUT}"
 
   build:

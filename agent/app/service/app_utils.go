@@ -747,9 +747,11 @@ func upgradeInstall(req request.AppInstallUpgrade) error {
 				detail.DockerCompose = string(composeDetail)
 				_ = appDetailRepo.Update(context.Background(), detail)
 			}
-			go func() {
-				RequestDownloadCallBack(detail.DownloadCallBackUrl)
-			}()
+			if !global.CONF.Base.IsOffline {
+				go func() {
+					RequestDownloadCallBack(detail.DownloadCallBackUrl)
+				}()
+			}
 		}
 		if install.App.Resource == constant.AppResourceLocal {
 			detailDir = path.Join(global.Dir.ResourceDir, "apps", "local", strings.TrimPrefix(install.App.Key, "local"), detail.Version)
@@ -1028,7 +1030,11 @@ func downloadApp(app model.App, appDetail model.AppDetail, appInstall *model.App
 		return nil
 	}
 	if global.CONF.Base.IsOffline {
-		return buserr.WithName("ErrFileNotFound", path.Join(app.GetAppResourcePath(), appDetail.Version))
+		appVersionDir := path.Join(app.GetAppResourcePath(), appDetail.Version)
+		if files.NewFileOp().Stat(appVersionDir) {
+			return nil
+		}
+		return buserr.WithName("ErrFileNotFound", appVersionDir)
 	}
 	appResourceDir := path.Join(global.Dir.AppResourceDir, app.Resource)
 	appDownloadDir := app.GetAppResourcePath()
@@ -1091,9 +1097,11 @@ func copyData(task *task.Task, app model.App, appDetail model.AppDetail, appInst
 		if err != nil {
 			return
 		}
-		go func() {
-			RequestDownloadCallBack(appDetail.DownloadCallBackUrl)
-		}()
+		if !global.CONF.Base.IsOffline {
+			go func() {
+				RequestDownloadCallBack(appDetail.DownloadCallBackUrl)
+			}()
+		}
 	}
 	appKey := app.Key
 	installAppDir := path.Join(global.Dir.AppInstallDir, app.Key)

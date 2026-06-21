@@ -1,11 +1,18 @@
 package service
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/1Panel-dev/1Panel/agent/app/dto"
+	"github.com/1Panel-dev/1Panel/agent/app/dto/request"
 	"github.com/1Panel-dev/1Panel/agent/app/model"
+	apptask "github.com/1Panel-dev/1Panel/agent/app/task"
+	"github.com/1Panel-dev/1Panel/agent/constant"
+	"github.com/1Panel-dev/1Panel/agent/global"
 	"github.com/1Panel-dev/1Panel/agent/utils/re"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -67,5 +74,57 @@ func TestOfflineCatalogTagDataCanBeParsed(t *testing.T) {
 	}
 	if len(catalog.Extra.Tags) != 1 || catalog.Extra.Tags[0].Key != "Database" {
 		t.Fatalf("unexpected parsed catalog: %#v", catalog.Extra)
+	}
+}
+
+func TestCopyDataUsesImportedRemoteAppResourcesOffline(t *testing.T) {
+	oldConf := global.CONF
+	oldDir := global.Dir
+	t.Cleanup(func() {
+		global.CONF = oldConf
+		global.Dir = oldDir
+	})
+
+	rootDir := t.TempDir()
+	global.CONF.Base.IsOffline = true
+	global.Dir.AppResourceDir = filepath.Join(rootDir, "resource", "apps")
+	global.Dir.RemoteAppResourceDir = filepath.Join(global.Dir.AppResourceDir, constant.AppResourceRemote)
+	global.Dir.AppInstallDir = filepath.Join(rootDir, "apps")
+
+	resourceDir := filepath.Join(global.Dir.RemoteAppResourceDir, "redis", "7.4.2")
+	if err := os.MkdirAll(filepath.Join(resourceDir, "conf"), constant.DirPerm); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(resourceDir, "docker-compose.yml"), []byte("services: {}\n"), constant.FilePerm); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(resourceDir, "conf", "redis.conf"), []byte("appendonly yes\n"), constant.FilePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	app := model.App{Key: "redis", Resource: constant.AppResourceRemote}
+	detail := model.AppDetail{Version: "7.4.2"}
+	install := &model.AppInstall{
+		Name:          "redis",
+		App:           app,
+		DockerCompose: "services:\n  redis:\n    image: redis:7.4.2\n",
+	}
+	req := request.AppInstallCreate{Name: "redis", Params: map[string]interface{}{"PANEL_APP_PORT_HTTP": 6379}}
+	testTask := &apptask.Task{Logger: logrus.New()}
+
+	if err := copyData(testTask, app, detail, install, req); err != nil {
+		t.Fatal(err)
+	}
+
+	composePath := filepath.Join(global.Dir.AppInstallDir, "redis", "redis", "docker-compose.yml")
+	compose, err := os.ReadFile(composePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(compose) != install.DockerCompose {
+		t.Fatalf("unexpected compose content: %s", compose)
+	}
+	if _, err = os.Stat(filepath.Join(global.Dir.AppInstallDir, "redis", "redis", "conf", "redis.conf")); err != nil {
+		t.Fatal(err)
 	}
 }

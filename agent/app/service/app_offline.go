@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/1Panel-dev/1Panel/agent/app/model"
@@ -13,16 +14,9 @@ func (a AppService) offlineAvailableAppIDs() ([]uint, error) {
 	if err != nil {
 		return nil, err
 	}
-	imageList, err := NewIImageService().ListAll()
+	availableImages, err := offlineAvailableImages()
 	if err != nil {
 		return nil, err
-	}
-
-	availableImages := make(map[string]struct{})
-	for _, image := range imageList {
-		for _, tag := range image.Tags {
-			availableImages[normalizeImageName(tag)] = struct{}{}
-		}
 	}
 
 	availableIDs := make([]uint, 0, len(apps))
@@ -35,16 +29,46 @@ func (a AppService) offlineAvailableAppIDs() ([]uint, error) {
 	return availableIDs, nil
 }
 
+func offlineAvailableImages() (map[string]struct{}, error) {
+	imageList, err := NewIImageService().ListAll()
+	if err != nil {
+		return nil, err
+	}
+	availableImages := make(map[string]struct{})
+	for _, image := range imageList {
+		for _, tag := range image.Tags {
+			availableImages[normalizeImageName(tag)] = struct{}{}
+		}
+	}
+	return availableImages, nil
+}
+
+func offlineAvailableDetails(details []model.AppDetail) ([]model.AppDetail, error) {
+	availableImages, err := offlineAvailableImages()
+	if err != nil {
+		return nil, err
+	}
+	result := make([]model.AppDetail, 0, len(details))
+	for _, detail := range details {
+		if offlineDetailAvailable(detail, availableImages) {
+			result = append(result, detail)
+		}
+	}
+	return result, nil
+}
+
+func offlineDetailAvailable(detail model.AppDetail, availableImages map[string]struct{}) bool {
+	if detail.DockerCompose == "" {
+		return false
+	}
+	env := []byte(fmt.Sprintf("JAVA_VERSION=%s\n", detail.Version))
+	images, err := docker.GetImagesFromDockerCompose(env, []byte(detail.DockerCompose))
+	return err == nil && imagesAvailable(images, availableImages)
+}
+
 func offlineAppHasAvailableVersion(app model.App, availableImages map[string]struct{}) bool {
 	for _, detail := range app.Details {
-		if detail.DockerCompose == "" {
-			continue
-		}
-		images, err := docker.GetImagesFromDockerCompose(nil, []byte(detail.DockerCompose))
-		if err != nil {
-			continue
-		}
-		if imagesAvailable(images, availableImages) {
+		if offlineDetailAvailable(detail, availableImages) {
 			return true
 		}
 	}

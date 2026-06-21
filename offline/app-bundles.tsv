@@ -1,0 +1,7 @@
+# bundle	app	version	image	architectures
+mysql8	mysql	8.4.10	mysql:8.4.10	amd64,arm64
+mysql5	mysql	5.7.44	mysql:5.7.44	amd64
+redis	redis	7.4.9	redis:7.4.9	amd64,arm64
+java8	java	1.8	bitnamilegacy/java:1.8	amd64,arm64
+java17	java	17	1panel/java:17	amd64,arm64
+java21	java	21	1panel/java:21	amd64,arm64

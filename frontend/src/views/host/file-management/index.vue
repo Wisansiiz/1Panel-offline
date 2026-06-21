@@ -222,16 +222,6 @@
                                 </template>
                             </el-input>
                         </div>
-                        <el-button
-                            v-permission
-                            v-node-admin
-                            class="max-w-20"
-                            plain
-                            type="primary"
-                            @click="openAiSearchDrawer"
-                        >
-                            {{ $t('file.aiSearch') }}
-                        </el-button>
                     </div>
                 </div>
                 <LayoutContent class="file-layout" :title="$t('menu.files')" v-loading="loading">
@@ -716,14 +706,6 @@
         <TerminalDialog ref="dialogTerminalRef" />
         <Convert ref="convertRef" @close="search" />
 
-        <FileAiSearchDrawer
-            ref="aiSearchDrawerRef"
-            v-model="aiSearchDrawerVisible"
-            :list-path="req.path"
-            @pick-directory="openAiSearchPathPicker"
-            @open-editor="onAiSearchOpenEditor"
-        />
-        <FileList ref="fileRef" @choose="getSearchPath" />
         <FileShare ref="fileShareRef" @close="search" />
     </div>
 </template>
@@ -785,7 +767,6 @@ import Preview from './preview/index.vue';
 import TextPreview from './text-preview/index.vue';
 import VscodeOpenDialog from '@/components/vscode-open/index.vue';
 import Convert from './convert/index.vue';
-import FileAiSearchDrawer from './ai-search/file-ai-search-drawer.vue';
 import FileShare from './share/index.vue';
 import { debounce } from 'lodash-es';
 import TerminalDialog from './terminal/index.vue';
@@ -795,7 +776,6 @@ import type { TabPaneName } from 'element-plus';
 import { getComponentInfo } from '@/api/modules/host';
 import { routerToNameWithQuery } from '@/utils/router';
 import { loadBaseDir } from '@/api/modules/setting';
-import FileList from '@/components/file-list/index.vue';
 
 const { currentNode, isAdminOrNodeAdmin, isMobile, lastFilePath, openMenuTabs } = useGlobalStore();
 
@@ -804,7 +784,6 @@ interface FilePaths {
     name: string;
 }
 
-const fileRef = ref();
 const router = useRouter();
 const data = ref();
 const tableRefs = ref<Record<string, any>>({});
@@ -883,20 +862,6 @@ const fileConvert = reactive<{
 });
 const ffmpegExist = ref(false);
 
-const aiSearchDrawerVisible = ref(false);
-const aiSearchDrawerRef = ref<InstanceType<typeof FileAiSearchDrawer> | null>(null);
-
-const openAiSearchDrawer = () => {
-    aiSearchDrawerVisible.value = true;
-};
-
-const getSearchPath = (path: string | string[]) => {
-    aiSearchDrawerRef.value?.applyPathFromPicker(path);
-};
-
-const openAiSearchPathPicker = (path?: string) => {
-    fileRef.value.acceptParams({ path: path || req.path, dir: true, multiple: false });
-};
 
 const createRef = ref();
 const roleRef = ref();
@@ -1636,9 +1601,6 @@ const openPathInCodeEditor = (
         .catch(() => {});
 };
 
-const onAiSearchOpenEditor = (payload: { path: string; initialLine?: number }) => {
-    openPathInCodeEditor(payload.path, { initialLine: payload.initialLine });
-};
 
 const openCodeEditor = (path: string) => {
     openPathInCodeEditor(path);

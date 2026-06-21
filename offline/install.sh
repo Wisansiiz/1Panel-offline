@@ -15,6 +15,11 @@ PANEL_PASSWORD="${PANEL_PASSWORD:-$(od -An -N12 -tx1 /dev/urandom | tr -d ' \n')
 PANEL_ENTRANCE="${PANEL_ENTRANCE:-$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')}"
 PANEL_PORT="${PANEL_PORT:-9999}"
 PANEL_VERSION="${PANEL_VERSION:-$(cat "${PACKAGE_DIR}/VERSION")}"
+BUNDLED_DOCKER_INSTALLED=0
+if [[ -f "${PANEL_DIR}/offline-install.env" ]]; then
+    # shellcheck disable=SC1090
+    source "${PANEL_DIR}/offline-install.env"
+fi
 
 for command in install sha256sum systemctl uname; do
     command -v "${command}" >/dev/null 2>&1 || {
@@ -43,6 +48,7 @@ install_compose_plugin() {
 }
 
 install_docker_engine() {
+    BUNDLED_DOCKER_INSTALLED=1
     if ! command -v iptables >/dev/null 2>&1; then
         echo "iptables is required by Docker but is not installed on this host" >&2
         echo "install the operating system's iptables compatibility package before continuing" >&2
@@ -209,6 +215,7 @@ install_container_egress_policy
 install -m 0755 "${PACKAGE_DIR}/bin/1panel-core" /usr/local/bin/1panel-core
 install -m 0755 "${PACKAGE_DIR}/bin/1panel-agent" /usr/local/bin/1panel-agent
 install -m 0755 "${PACKAGE_DIR}/import-app.sh" /usr/local/bin/1panel-import-app
+install -m 0755 "${PACKAGE_DIR}/uninstall.sh" /usr/local/bin/1panel-uninstall
 mkdir -p "${OFFLINE_APP_DIR}" "${PANEL_DIR}/resource/offline" "${PANEL_DIR}/geo" "${PANEL_DIR}/conf"
 if find "${PACKAGE_DIR}/catalog" -mindepth 1 -print -quit | grep -q .; then
     cp -R "${PACKAGE_DIR}/catalog/." "${OFFLINE_APP_DIR}/"
@@ -245,6 +252,10 @@ log:
   max_backup: 10
 EOF
 chmod 0600 "${PANEL_DIR}/conf/app.yaml"
+cat >"${PANEL_DIR}/offline-install.env" <<EOF
+BUNDLED_DOCKER_INSTALLED=${BUNDLED_DOCKER_INSTALLED}
+EOF
+chmod 0600 "${PANEL_DIR}/offline-install.env"
 
 cat >/usr/local/bin/1pctl <<EOF
 #!/usr/bin/env bash
@@ -260,13 +271,14 @@ case "\${1:-}" in
     stop) systemctl stop 1panel-core 1panel-agent ;;
     restart) systemctl restart 1panel-agent 1panel-core ;;
     status) systemctl status 1panel-agent 1panel-core ;;
+    uninstall) exec /usr/local/bin/1panel-uninstall "\${@:2}" ;;
     user-info)
         echo "username: ${PANEL_USERNAME}"
         echo "password: ${PANEL_PASSWORD}"
         echo "port: ${PANEL_PORT}"
         echo "entrance: ${PANEL_ENTRANCE}"
         ;;
-    *) echo "usage: 1pctl {start|stop|restart|status|user-info}" ;;
+    *) echo "usage: 1pctl {start|stop|restart|status|user-info|uninstall}" ;;
 esac
 EOF
 chmod 0755 /usr/local/bin/1pctl
@@ -329,6 +341,7 @@ systemctl daemon-reload
 systemctl enable --now 1panel-agent 1panel-core
 
 echo "1Panel offline edition installed."
+echo "Bundled OpenResty/MySQL applications will appear after the local app catalog finishes syncing."
 echo "URL: http://<server-ip>:${PANEL_PORT}/${PANEL_ENTRANCE}"
 echo "Username: ${PANEL_USERNAME}"
 echo "Password: ${PANEL_PASSWORD}"

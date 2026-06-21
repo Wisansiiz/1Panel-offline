@@ -74,7 +74,11 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Verify offline network policy
-        run: ./offline/check-public-network.sh
+        run: |
+          ./offline/check-public-network.sh
+          test ! -e frontend/src/routers/modules/ai.ts
+          test ! -e agent/router/ro_ai.go
+          ! grep -q 'AIToolsRouter' agent/router/common.go
 
       - name: Build ${{ matrix.arch }} offline bundle
         env:
@@ -92,9 +96,20 @@ jobs:
           test -x "${bundle}/runtime/docker/containerd"
           test -x "${bundle}/runtime/docker/runc"
           test -x "${bundle}/runtime/cli-plugins/docker-compose"
+          test -x "${bundle}/uninstall.sh"
+          "${bundle}/uninstall.sh" --help >/dev/null
           test -s "${bundle}/images/images.tar"
-          test ! -e "${bundle}/appstore-data.yaml"
-          test -z "$(find "${bundle}/catalog" -mindepth 1 -print -quit)"
+          test -s "${bundle}/appstore-data.yaml"
+          test -f "${bundle}/catalog/openresty/1.27.1.2-2-3-focal/docker-compose.yml"
+          test -f "${bundle}/catalog/mysql/8.4.6/docker-compose.yml"
+          test -f "${bundle}/catalog/mysql/8.0.43/docker-compose.yml"
+          if [[ "${{ matrix.arch }}" == "amd64" ]]; then
+            test -f "${bundle}/catalog/mysql/5.7.44/docker-compose.yml"
+            test -f "${bundle}/catalog/mysql/5.6.51/docker-compose.yml"
+          else
+            test ! -e "${bundle}/catalog/mysql/5.7.44"
+            test ! -e "${bundle}/catalog/mysql/5.6.51"
+          fi
           if [[ "${{ matrix.arch }}" == "amd64" ]]; then
             "${bundle}/runtime/docker/docker" --version
             "${bundle}/runtime/docker/dockerd" --version
@@ -163,19 +178,102 @@ jobs:
             mysql:8.0.43 \
             mysql:5.7.44 \
             mysql:5.6.51 >/dev/null
-          test -z "$(sudo find /opt/1panel/resource/apps/remote -mindepth 1 -print -quit)"
-          test ! -e /opt/1panel/resource/offline/data.yaml
+          test -f /opt/1panel/resource/apps/remote/openresty/1.27.1.2-2-3-focal/docker-compose.yml
+          test -f /opt/1panel/resource/apps/remote/mysql/8.4.6/docker-compose.yml
+          test -f /opt/1panel/resource/offline/data.yaml
+
+  app-bundles:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - bundle: mysql8
+            version: 8.4.10
+            arch: amd64
+          - bundle: mysql8
+            version: 8.4.10
+            arch: arm64
+          - bundle: mysql5
+            version: 5.7.44
+            arch: amd64
+          - bundle: redis
+            version: 7.4.9
+            arch: amd64
+          - bundle: redis
+            version: 7.4.9
+            arch: arm64
+          - bundle: java8
+            version: 1.8
+            arch: amd64
+          - bundle: java8
+            version: 1.8
+            arch: arm64
+          - bundle: java17
+            version: "17"
+            arch: amd64
+          - bundle: java17
+            version: "17"
+            arch: arm64
+          - bundle: java21
+            version: "21"
+            arch: amd64
+          - bundle: java21
+            version: "21"
+            arch: arm64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet
+          docker system prune --all --force
+
+      - name: Build ${{ matrix.bundle }} ${{ matrix.arch }} import bundle
+        run: ./offline/build-app-bundle.sh "${{ matrix.bundle }}" "${{ matrix.arch }}"
+
+      - name: Validate import bundle
+        shell: bash
+        run: |
+          bundle="dist/offline-apps/1panel-app-${{ matrix.bundle }}-${{ matrix.version }}-linux-${{ matrix.arch }}"
+          test -f "${bundle}/MANIFEST"
+          test -f "${bundle}/SHA256SUMS"
+          test -f "${bundle}/apps/"*/data.yml
+          test -f "${bundle}/apps/"*/"${{ matrix.version }}"/docker-compose.yml
+          test -s "${bundle}/images/${{ matrix.bundle }}-${{ matrix.version }}-${{ matrix.arch }}.tar"
+          (
+            cd "${bundle}"
+            sha256sum -c SHA256SUMS
+          )
+
+      - name: Upload import bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: 1panel-app-${{ matrix.bundle }}-${{ matrix.version }}-linux-${{ matrix.arch }}
+          path: dist/offline-apps/*.tar.gz
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
 
   release:
     needs:
       - prepare
       - build
       - install-smoke
+      - app-bundles
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4
         with:
           pattern: 1panel-offline-${{ needs.prepare.outputs.version }}-linux-*
+          path: release
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 1panel-app-*
           path: release
           merge-multiple: true
 
@@ -198,7 +296,9 @@ jobs:
             非官方 1Panel 社区版离线修改版。
 
             包内包含 Docker Engine、containerd、runc、Docker Compose
-            以及 OpenResty/MySQL 基础镜像，不包含应用目录。
+            以及 OpenResty/MySQL 基础镜像和对应应用定义。
+            Release 同时提供 MySQL 8、MySQL 5、Redis、Java 8、Java 17、
+            Java 21 的独立离线导入包。
 
             下载对应架构的 `.tar.gz` 文件后执行：
 

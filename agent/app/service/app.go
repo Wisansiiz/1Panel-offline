@@ -215,6 +215,12 @@ func (a AppService) GetApp(ctx *gin.Context, key string) (*response.AppDTO, erro
 	if err != nil {
 		return nil, err
 	}
+	if global.CONF.Base.IsOffline {
+		details, err = offlineAvailableDetails(details)
+		if err != nil {
+			return nil, err
+		}
+	}
 	appDTO.Versions = getAppVersions(key, details)
 	tags, err := getAppTags(app.ID, strings.ToLower(common.GetLang(ctx)))
 	if err != nil {
@@ -247,6 +253,15 @@ func (a AppService) GetAppDetail(appID uint, version, appType string) (response.
 	detail, err := appDetailRepo.GetFirst(opts...)
 	if err != nil {
 		return appDetailDTO, err
+	}
+	if global.CONF.Base.IsOffline {
+		availableImages, imageErr := offlineAvailableImages()
+		if imageErr != nil {
+			return appDetailDTO, imageErr
+		}
+		if !offlineDetailAvailable(detail, availableImages) {
+			return appDetailDTO, fmt.Errorf("required offline image for %s is not available", version)
+		}
 	}
 	appDetailDTO.AppDetail = detail
 	appDetailDTO.Enable = true
@@ -380,6 +395,15 @@ func (a AppService) installWithHooks(req request.AppInstallCreate, executeScript
 	app, err = appRepo.GetFirst(repo.WithByID(appDetail.AppId))
 	if err != nil {
 		return
+	}
+	if global.CONF.Base.IsOffline {
+		availableImages, imageErr := offlineAvailableImages()
+		if imageErr != nil {
+			return nil, imageErr
+		}
+		if !offlineDetailAvailable(appDetail, availableImages) {
+			return nil, fmt.Errorf("required offline image for %s %s is not available", app.Name, appDetail.Version)
+		}
 	}
 	if DatabaseKeys[app.Key] > 0 {
 		if existDatabases, _ := databaseRepo.GetList(repo.WithByName(req.Name)); len(existDatabases) > 0 {

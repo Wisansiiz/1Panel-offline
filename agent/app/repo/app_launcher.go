@@ -79,8 +79,7 @@ func (u *LauncherRepo) ListQuickJump(withAll bool) []model.QuickJump {
 		_ = global.DB.Where("is_show = ?", true).Find(&quicks).Error
 	}
 	if !withAll && len(quicks) == 0 {
-		return []model.QuickJump{
-			{Name: "Agent", Title: "aiTools.agents.agent", Recommend: 1, IsShow: true, Router: "/ai/agents/agent"},
+		quicks = []model.QuickJump{
 			{Name: "Website", Title: "menu.website", Recommend: 10, IsShow: true, Router: "/websites"},
 			{Name: "Database", Title: "menu.database", Recommend: 30, IsShow: true, Router: "/databases"},
 			{Name: "Cronjob", Title: "menu.cronjob", Recommend: 50, IsShow: false, Router: "/cronjobs"},
@@ -88,7 +87,17 @@ func (u *LauncherRepo) ListQuickJump(withAll bool) []model.QuickJump {
 		}
 	}
 
-	return quicks
+	if !global.CONF.Base.IsOffline {
+		return quicks
+	}
+	filtered := make([]model.QuickJump, 0, len(quicks))
+	for _, quick := range quicks {
+		if quick.Router == "/ai" || len(quick.Router) > 4 && quick.Router[:4] == "/ai/" {
+			continue
+		}
+		filtered = append(filtered, quick)
+	}
+	return filtered
 }
 func (u *LauncherRepo) UpdateQuicks(quicks []model.QuickJump) error {
 	tx := global.DB.Begin()

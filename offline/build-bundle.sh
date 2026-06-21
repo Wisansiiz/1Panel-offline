@@ -72,6 +72,11 @@ rm -rf "${WORK_DIR}"
 mkdir -p "${WORK_DIR}/bin" "${IMAGE_DIR}" "${WORK_DIR}/catalog" \
     "${RUNTIME_DIR}/docker" "${RUNTIME_DIR}/cli-plugins"
 
+"${ROOT_DIR}/offline/prepare-builtin-catalog.sh" \
+    "${ARCH}" \
+    "${WORK_DIR}/catalog" \
+    "${WORK_DIR}/appstore-data.yaml"
+
 (
     cd "${ROOT_DIR}/frontend"
     npm ci
@@ -146,11 +151,12 @@ EOF
 
 cp "${ROOT_DIR}/offline/install.sh" "${WORK_DIR}/install.sh"
 cp "${ROOT_DIR}/offline/import-app.sh" "${WORK_DIR}/import-app.sh"
+cp "${ROOT_DIR}/offline/uninstall.sh" "${WORK_DIR}/uninstall.sh"
 cp "${ROOT_DIR}/offline/images.tsv" "${WORK_DIR}/images.tsv"
 cp "${ROOT_DIR}/offline/README.md" "${WORK_DIR}/README.md"
 printf '%s\n' "${BUILD_VERSION}" > "${WORK_DIR}/VERSION"
 printf '%s\n' "${ARCH}" > "${WORK_DIR}/ARCH"
-chmod +x "${WORK_DIR}/install.sh" "${WORK_DIR}/import-app.sh"
+chmod +x "${WORK_DIR}/install.sh" "${WORK_DIR}/import-app.sh" "${WORK_DIR}/uninstall.sh"
 
 (
     cd "${WORK_DIR}"

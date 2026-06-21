@@ -2,6 +2,7 @@ package router
 
 import (
 	v2 "github.com/1Panel-dev/1Panel/agent/app/api/v2"
+	"github.com/1Panel-dev/1Panel/agent/global"
 	"github.com/1Panel-dev/1Panel/agent/middleware"
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +15,9 @@ func (f *FileRouter) InitRouter(Router *gin.RouterGroup) {
 	baseApi := v2.ApiGroupApp.BaseApi
 	{
 		fileRouter.POST("/search", baseApi.ListFiles)
-		fileRouter.POST("/ai-search", baseApi.FileAISearch)
+		if !global.CONF.Base.IsOffline {
+			fileRouter.POST("/ai-search", baseApi.FileAISearch)
+		}
 		fileRouter.POST("/upload/search", baseApi.SearchUploadWithPage)
 		fileRouter.POST("/tree", baseApi.GetFileTree)
 		fileRouter.POST("", baseApi.CreateFile)

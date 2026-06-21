@@ -9,5 +9,5 @@ arm64	mysql:8.4.6
 arm64	mysql:8.0.43
 
 # Add other custom images below, one per line.
-# amd64	redis:7.4.2-alpine
-# arm64	redis:7.4.2-alpine
+# amd64	redis:7.4.9
+# arm64	redis:7.4.9

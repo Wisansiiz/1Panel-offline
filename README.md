@@ -25,8 +25,8 @@ catalog.
 - Prevents Docker image pulls and starts Compose projects with `--pull never`.
 - Installs bundled Docker Engine, containerd, runc and Docker Compose when the
   target host has no Docker installation.
-- Starts with an empty app store; users import only the application definitions
-  and images required by their environment.
+- Includes only the OpenResty/MySQL application definitions matching bundled
+  images; users import definitions and images for any additional applications.
 - Builds reproducible `linux/amd64` and `linux/arm64` offline bundles.
 - Installs systemd network restrictions that only permit loopback and private
   network ranges.
@@ -53,6 +53,9 @@ tar -xzf 1panel-offline-*-linux-amd64.tar.gz
 
 See [the offline guide](offline/README.md) for local builds, installation and
 external image import instructions.
+
+The same Release also publishes architecture-specific import bundles for
+MySQL 8.4.10, MySQL 5.7.44 (amd64 only), Redis 7.4.9, and Java 8/17/21.
 
 <p align="center">
   <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="1Panel-dev%2F1Panel | Trendshift" style="width: 240px; height: auto;" /></a>
@@ -87,9 +90,9 @@ external image import instructions.
 
 ## What is 1Panel?
 
-The upstream 1Panel project is a modern, open-source VPS control panel with
-native AI agent support. This fork preserves the community features and adapts
-their deployment path for fully offline environments.
+The upstream 1Panel project is a modern, open-source VPS control panel. This
+fork adapts its non-AI community management features for fully offline
+environments; the AI module is disabled in this distribution.
 
 👉 Watch the [2-minute introduction](https://www.youtube.com/watch?v=Jl_wqp-XA08)
 
@@ -98,7 +101,6 @@ their deployment path for fully offline environments.
 | | 1Panel | cPanel / Plesk | aaPanel | Webmin |
 |--|--------|----------------|---------|--------|
 | Free & open source | ✅ | ❌ | Partial | ✅ |
-| Native AI agent runtime | ✅ | ❌ | ❌ | ❌ |
 | One-click app marketplace | ✅ 165+ apps | ❌ | ✅ | ❌ |
 | Modern UI (post-2020) | ✅ | ❌ | Partial | ❌ |
 | Docker / container management | ✅ | ❌ | ❌ | ❌ |
@@ -106,7 +108,6 @@ their deployment path for fully offline environments.
 
 ## Key Features
 
-- **AI Agent Runtime**: Deploy Ollama LLMs, spin up OpenClaw personal agents, and monitor GPU utilization — all from the dashboard. No separate AI stack to manage.
 - **One-Click Website Deployment**: Launch production-ready websites with automatic domain binding, SSL provisioning, and Nginx config — zero manual setup.
 - **App Marketplace**: 165+ trusted open-source apps (Nextcloud, Bitwarden, Umami, NocoBase, and more) installed and updated with a single click.
 - **Docker & Container Management**: Create, start, stop, and inspect containers, images, networks, and volumes through a visual UI — no CLI juggling.
@@ -138,7 +139,6 @@ Run `1pctl user-info` via SSH if you need to retrieve your access credentials.
 | Feature | OSS | Pro |
 |---------|:---:|:---:|
 | One-click app installs | ✅ | ✅ |
-| AI agents (OpenClaw) | 1 agent | Unlimited |
 | WAF & advanced security | Basic | ✅ |
 | Website tamper protection | ❌ | ✅ |
 | Website uptime monitoring | ❌ | ✅ |

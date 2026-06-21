@@ -82,7 +82,6 @@ tar -xzf 1panel-offline-*-linux-amd64.tar.gz
 | Redis | `7.4.9` | ✓ | ✓ |
 | Java 8 | `1.8` | ✓ | ✓ |
 | Java 17 | `17` | ✓ | ✓ |
-| Java 21 | `21` | ✓ | ✓ |
 
 文件名示例：
 

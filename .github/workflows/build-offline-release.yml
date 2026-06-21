@@ -204,12 +204,12 @@ jobs:
           - bundle: java17
             version: "17"
             arch: arm64
-          - bundle: java21
-            version: "21"
-            arch: amd64
-          - bundle: java21
-            version: "21"
-            arch: arm64
+          # - bundle: java21
+          #   version: "21"
+          #   arch: amd64
+          # - bundle: java21
+          #   version: "21"
+          #   arch: arm64
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -286,8 +286,8 @@ jobs:
 
             包内包含 Docker Engine、containerd、runc、Docker Compose
             以及 OpenResty 基础镜像和对应应用定义。
-            Release 同时提供 MySQL 8、MySQL 5、Redis、Java 8、Java 17、
-            Java 21 的独立离线导入包。
+            Release 同时提供 MySQL 8、MySQL 5、Redis、Java 8、
+            Java 17的独立离线导入包。
 
             下载对应架构的 `.tar.gz` 文件后执行：
 

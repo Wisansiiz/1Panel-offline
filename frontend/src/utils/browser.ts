@@ -1,3 +1,5 @@
+import { isAllowedOfflineURL } from '@/utils/offline-network';
+
 export const toLink = (link: string) => {
     const ipv6Regex = /^https?:\/\/([a-f0-9:]+):(\d+)(\/?.*)?$/i;
     try {
@@ -10,7 +12,9 @@ export const toLink = (link: string) => {
                 link = `${link.startsWith('https') ? 'https' : 'http'}://[${ipv6}]:${port}${path}`;
             }
         }
-        window.open(link, '_blank');
+        if (isAllowedOfflineURL(link)) {
+            window.open(link, '_blank');
+        }
     } catch (e) {}
 };
 

@@ -519,7 +519,6 @@ func (a AppService) installWithHooks(req request.AppInstallCreate, executeScript
 		}
 	}
 	if app.Key == "openresty" {
-		req.Params["CONTAINER_PACKAGE_URL"] = "http://archive.ubuntu.com/ubuntu/"
 		req.Params["RESTY_ADD_PACKAGE_BUILDDEPS"] = ""
 		req.Params["RESTY_CONFIG_OPTIONS_MORE"] = ""
 	}

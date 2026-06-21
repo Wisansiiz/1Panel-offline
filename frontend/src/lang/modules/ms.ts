@@ -217,7 +217,7 @@ const message = {
             logout: 'Log keluar',
             agreeTitle: 'Agreement',
             agreeContent:
-                'Untuk melindungi hak dan kepentingan sah anda dengan lebih baik, sila baca dan setuju dengan perjanjian berikut &laquo; <a href = "https://www.fit2cloud.com/legal/licenses.html" target = "_blank" > Perjanjian Lesen Komuniti </a> &raquo;',
+                'Untuk melindungi hak dan kepentingan sah anda dengan lebih baik, sila baca dan setuju dengan perjanjian berikut &laquo;  Perjanjian Lesen Komuniti  &raquo;',
             passkeyFailed: 'Log masuk Passkey gagal, sila cuba lagi',
             passkeyNotSupported: 'Pelayar atau persekitaran semasa tidak menyokong passkey',
             passkeyToPassword: 'Ada masalah menggunakan passkey? Gunakan kata laluan sahaja',
@@ -3384,7 +3384,7 @@ const message = {
         encryptionAlgorithm: 'Algoritma penyulitan',
         notSecurity: '(tidak selamat)',
         encryptHelper:
-            "Let's Encrypt mempunyai had kekerapan untuk mengeluarkan sijil, tetapi mencukupi untuk memenuhi keperluan biasa. Operasi terlalu kerap akan menyebabkan kegagalan pengeluaran. Untuk sekatan tertentu, sila lihat <a target='_blank' href='https://letsencrypt.org/docs/rate-limits/'>dokumen rasmi</a>",
+            "Let's Encrypt mempunyai had kekerapan untuk mengeluarkan sijil, tetapi mencukupi untuk memenuhi keperluan biasa. Operasi terlalu kerap akan menyebabkan kegagalan pengeluaran. Untuk sekatan tertentu, sila lihat dokumen rasmi",
         ipValue: 'Nilai',
         ext: 'sambungan fail',
         wafInputHelper: 'Masukkan data secara berbaris, satu baris',

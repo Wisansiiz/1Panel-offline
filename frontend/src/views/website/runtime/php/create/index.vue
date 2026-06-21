@@ -217,7 +217,7 @@ import { reactive, ref } from 'vue';
 import { getLabel } from '@/utils/app-store';
 import { useGlobalStore } from '@/composables/useGlobalStore';
 import { resolveRuntimeAppResource } from '@/utils/runtime-app-resource';
-const { docsUrl, isFxplay, isIntl, isOffline, isXpackOrEE } = useGlobalStore();
+const { docsUrl, isFxplay, isOffline, isXpackOrEE } = useGlobalStore();
 
 interface OperateRrops {
     id?: number;
@@ -241,47 +241,7 @@ const appReq = reactive({
     pageSize: 20,
     resource: 'remote',
 });
-const phpSources = isIntl.value
-    ? [
-          {
-              label: i18n.global.t('runtime.default'),
-              value: 'https://deb.debian.org',
-          },
-          {
-              label: i18n.global.t('runtime.xtom'),
-              value: 'https://mirrors.xtom.com',
-          },
-      ]
-    : [
-          {
-              label: i18n.global.t('runtime.ustc'),
-              value: 'https://mirrors.ustc.edu.cn',
-          },
-          {
-              label: i18n.global.t('runtime.netease'),
-              value: 'https://mirrors.163.com',
-          },
-          {
-              label: i18n.global.t('runtime.aliyun'),
-              value: 'https://mirrors.aliyun.com',
-          },
-          {
-              label: i18n.global.t('runtime.tsinghua'),
-              value: 'https://mirrors.tuna.tsinghua.edu.cn',
-          },
-          {
-              label: i18n.global.t('runtime.xtomhk'),
-              value: 'https://mirrors.xtom.com.hk',
-          },
-          {
-              label: i18n.global.t('runtime.xtom'),
-              value: 'https://mirrors.xtom.com',
-          },
-          {
-              label: i18n.global.t('commons.table.default'),
-              value: 'https://deb.debian.org',
-          },
-      ];
+const phpSources: Array<{ label: string; value: string }> = [];
 
 const initData = (type: string) => ({
     name: '',
@@ -291,7 +251,7 @@ const initData = (type: string) => ({
     type: type,
     resource: 'appstore',
     rebuild: false,
-    source: phpSources[0].value,
+    source: '',
     environments: [],
     remark: '',
 });

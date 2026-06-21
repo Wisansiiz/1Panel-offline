@@ -21,8 +21,10 @@ import SvgIcon from './components/svg-icon/svg-icon.vue';
 import Components from '@/components';
 
 import directives from '@/directives/index';
+import { installOfflineNavigationGuard } from '@/utils/offline-network';
 
 const bootstrap = async () => {
+    installOfflineNavigationGuard();
     const currentLocale = i18n.global.locale.value;
 
     await Promise.all([loadLocaleMessages(currentLocale), ensureFallbackLocale()]);

@@ -2,12 +2,12 @@
     <div class="footer" :style="{ height: isMobile ? '108px' : '48px' }">
         <div class="flex w-full flex-col gap-4 md:justify-between md:flex-row">
             <div class="flex flex-wrap gap-4">
-                <a v-if="!isIntl && !isFxplay" href="https://fit2cloud.com/" target="_blank">
+                <span v-if="!isIntl && !isFxplay">
                     Copyright © 2014-{{ year }} {{ $t('commons.fit2cloud') }}
-                </a>
-                <a v-else href="https://1panel.pro/" target="_blank">
+                </span>
+                <span v-else>
                     Copyright © {{ year }} {{ $t('commons.lingxia') }}
-                </a>
+                </span>
             </div>
             <div class="flex flex-row gap-2 md:flex-col lg:flex-row">
                 <SystemUpgrade :footer="true" />

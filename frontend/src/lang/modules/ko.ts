@@ -214,7 +214,7 @@ const message = {
             logout: '로그아웃',
             agreeTitle: '동의',
             agreeContent:
-                '귀하의 합법적인 권리와 이익을 보다 잘 보호하기 위해, 다음 &laquo; <a href = "https://www.fit2cloud.com/legal/licenses.html" target = "_blank" >커뮤니티 라이선스 계약</a> &raquo;을 읽고 동의해주세요.',
+                '귀하의 합법적인 권리와 이익을 보다 잘 보호하기 위해, 다음 &laquo; 커뮤니티 라이선스 계약 &raquo;을 읽고 동의해주세요.',
             passkeyFailed: '패스키 로그인에 실패했습니다. 다시 시도하세요',
             passkeyNotSupported: '현재 브라우저 또는 환경에서 패스키를 지원하지 않습니다',
             passkeyToPassword: '패스키 사용에 문제가 있나요? 비밀번호로 로그인하세요',
@@ -3268,7 +3268,7 @@ const message = {
         encryptionAlgorithm: '암호화 알고리즘',
         notSecurity: '(안전하지 않음)',
         encryptHelper:
-            "Let's Encrypt 는 인증서 발급에 빈도 제한이 있지만 일반적인 요구 사항을 충족하기에 충분합니다. 너무 자주 작업하면 발급 실패가 발생할 수 있습니다. 자세한 제한 사항은 <a target='_blank' href='https://letsencrypt.org/zh-cn/docs /rate-limits/'>공식 문서</a>를 참조하세요.",
+            "Let's Encrypt 는 인증서 발급에 빈도 제한이 있지만 일반적인 요구 사항을 충족하기에 충분합니다. 너무 자주 작업하면 발급 실패가 발생할 수 있습니다. 자세한 제한 사항은 공식 문서를 참조하세요.",
         ipValue: '값',
         ext: '파일 확장자',
         wafInputHelper: '줄 단위로 데이터 입력, 한 줄에 하나씩',

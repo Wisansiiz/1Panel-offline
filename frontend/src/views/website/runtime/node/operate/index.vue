@@ -100,7 +100,7 @@ const initData = (type: string) => ({
     rebuild: false,
     codeDir: '/',
     port: 4004,
-    source: 'https://registry.npmjs.org/',
+    source: '',
     exposedPorts: [],
     environments: [],
     extraHosts: [],
@@ -130,20 +130,7 @@ const hasPnpm = computed(() => {
     return parseFloat(runtime.version) > 18;
 });
 
-const imageSources = [
-    {
-        label: i18n.global.t('commons.table.default'),
-        value: 'https://registry.npmjs.org/',
-    },
-    {
-        label: i18n.global.t('runtime.taobao'),
-        value: 'https://registry.npmmirror.com',
-    },
-    {
-        label: i18n.global.t('runtime.tencent'),
-        value: 'https://mirrors.cloud.tencent.com/npm/',
-    },
-];
+const imageSources: Array<{ label: string; value: string }> = [];
 
 watch(
     () => runtime.name,

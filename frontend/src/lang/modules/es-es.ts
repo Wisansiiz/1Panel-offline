@@ -217,7 +217,7 @@ const message = {
             logout: 'Cerrar sesión',
             agreeTitle: 'Acuerdo',
             agreeContent:
-                'Para proteger mejor sus derechos e intereses legítimos, por favor lea y acepte el siguiente acuerdo &laquo; <a href = "https://www.fit2cloud.com/legal/licenses.html" target = "_blank" > Acuerdo de Licencia Comunitaria </a> &raquo;',
+                'Para proteger mejor sus derechos e intereses legítimos, por favor lea y acepte el siguiente acuerdo &laquo;  Acuerdo de Licencia Comunitaria  &raquo;',
             passkeyFailed: 'El inicio de sesión con Passkey falló, inténtalo de nuevo',
             passkeyNotSupported: 'El navegador o entorno actual no admite Passkey',
             passkeyToPassword: '¿Tienes problemas para usar una passkey? Usa la contraseña en su lugar',
@@ -3375,7 +3375,7 @@ const message = {
         encryptionAlgorithm: 'Algoritmo de cifrado',
         notSecurity: '(inseguro)',
         encryptHelper:
-            "Let's Encrypt tiene límites de frecuencia para emitir certificados. Consulta la <a target='_blank' href='https://letsencrypt.org/zh-cn/docs/rate-limits/'>documentación oficial</a>.",
+            "Let's Encrypt tiene límites de frecuencia para emitir certificados. Consulta la documentación oficial.",
         ipValue: 'Valor',
         ext: 'Extensión de archivo',
         wafInputHelper: 'Introduce datos línea por línea',

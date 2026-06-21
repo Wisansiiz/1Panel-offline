@@ -73,7 +73,7 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
 };
 
 const goSearch = () => {
-    window.open('https://ollama.com/search', '_blank', 'noopener,noreferrer');
+    return;
 };
 
 const handleClose = () => {

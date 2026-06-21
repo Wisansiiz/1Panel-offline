@@ -215,7 +215,7 @@ const message = {
             logout: 'Logout',
             agreeTitle: 'Agreement',
             agreeContent:
-                'In order to better protect your legitimate rights and interests, please read and agree to the following agreement &laquo; <a href = "https://www.fit2cloud.com/legal/licenses.html" target = "_blank" > Community License Agreement </a> &raquo;',
+                'In order to better protect your legitimate rights and interests, please read and agree to the following agreement &laquo;  Community License Agreement  &raquo;',
             passkeyFailed: 'Passkey sign-in failed, please try again',
             passkeyNotSupported:
                 'Current browser or environment does not support passkeys, confirm you have bound a domain name and are accessing through HTTPS',
@@ -3315,7 +3315,7 @@ const message = {
         encryptionAlgorithm: 'Encryption algorithm',
         notSecurity: '(not safe)',
         encryptHelper:
-            "Let's Encrypt has a frequency limit for issuing certificates, but it is sufficient to meet normal needs. Too frequent operations will cause issuance failure. For specific restrictions, please see <a target='_blank' href='https://letsencrypt.org/zh-cn/docs /rate-limits/'>official documentation</a> ",
+            "Let's Encrypt has a frequency limit for issuing certificates, but it is sufficient to meet normal needs. Too frequent operations will cause issuance failure. For specific restrictions, please see official documentation ",
         ipValue: 'Value',
         wafValueHelper: 'Value',
         ext: 'file extension',

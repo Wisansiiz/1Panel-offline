@@ -13,7 +13,7 @@
             <el-input v-model.trim="req.extCommand" class="p-w-400"></el-input>
         </el-form-item>
         <el-form-item :label="$t('website.mirror')">
-            <el-select v-model="req.mirror" class="p-w-400">
+            <el-select v-model="req.mirror" class="p-w-400" filterable allow-create default-first-option>
                 <el-option
                     v-for="mirror in mirrors"
                     :key="mirror.label"
@@ -44,7 +44,6 @@
 </template>
 <script setup lang="ts">
 import { execComposer, getWebsite } from '@/api/modules/website';
-import i18n from '@/lang';
 import { newUUID } from '@/utils/id';
 import TaskLog from '@/components/log/task/index.vue';
 import FileList from '@/components/file-list/index.vue';
@@ -60,7 +59,7 @@ const req = reactive({
     websiteID: 0,
     command: 'install',
     extCommand: '',
-    mirror: 'https://mirrors.aliyun.com/composer/',
+    mirror: '',
     dir: '',
     user: 'www-data',
     taskID: '',
@@ -69,32 +68,7 @@ const loading = ref(false);
 const taskLogRef = ref();
 const dirRef = ref();
 
-const mirrors = [
-    {
-        label: i18n.global.t('runtime.aliyun') + '(mirrors.aliyun.com)',
-        value: 'https://mirrors.aliyun.com/composer/',
-    },
-    {
-        label: i18n.global.t('website.tencentCloud') + '(mirrors.cloud.tencent.com)',
-        value: 'https://mirrors.cloud.tencent.com/composer/',
-    },
-    {
-        label: i18n.global.t('commons.table.default') + '(repo.packagist.org)',
-        value: 'https://repo.packagist.org',
-    },
-    {
-        label: i18n.global.t('website.packagist') + '(packagist.phpcomposer.com)',
-        value: 'https://packagist.phpcomposer.com',
-    },
-    {
-        label: i18n.global.t('website.huaweicloud') + '(mirrors.huaweicloud.com)',
-        value: 'https://mirrors.huaweicloud.com/repository/php',
-    },
-    {
-        label: 'Packagist Mirror' + '(packagist.mirrors.sjtug.sjtu.edu.cn)',
-        value: 'https://packagist.mirrors.sjtug.sjtu.edu.cn/',
-    },
-];
+const mirrors: Array<{ label: string; value: string }> = [];
 
 const getPath = (execDir: string) => {
     req.dir = execDir;

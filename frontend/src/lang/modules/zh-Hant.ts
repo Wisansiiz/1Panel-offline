@@ -211,7 +211,7 @@ const message = {
             errorAgree: '請點選同意社區軟體許可協議',
             agreeTitle: '服務協議及隱私保護',
             agreeContent:
-                '為了更好的保障您的合法權益，請您閱讀並同意以下協議 &laquo; <a href="https://www.fit2cloud.com/legal/licenses.html" target="_blank"> 飛致雲社區軟體許可協議 </a> &raquo;',
+                '為了更好的保障您的合法權益，請您閱讀並同意以下協議 &laquo;  飛致雲社區軟體許可協議  &raquo;',
             logout: '登出',
             passkeyFailed: '通行金鑰登入失敗，請重試',
             passkeyNotSupported: '目前瀏覽器或環境不支援通行金鑰',
@@ -3089,7 +3089,7 @@ const message = {
         encryptionAlgorithm: '加密演算法',
         notSecurity: '（不安全）',
         encryptHelper:
-            "Let's Encrypt 簽發憑證有頻率限制，但足以滿足正常需求，過於頻繁操作會導致簽發失敗。詳細限制請看 <a target=「_blank」 href='https://letsencrypt.org/zh-cn/docs/rate-limits/'>官方文件</a> ",
+            "Let's Encrypt 簽發憑證有頻率限制，但足以滿足正常需求，過於頻繁操作會導致簽發失敗。詳細限制請看 官方文件 ",
         ipValue: '值',
         ext: '檔案副檔名',
         wafInputHelper: '按行輸入資料，一行一個',

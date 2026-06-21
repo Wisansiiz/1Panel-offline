@@ -86,8 +86,6 @@
                                     {{ $t('commons.button.agree') }}
                                     <a
                                         class="agree"
-                                        href="https://www.fit2cloud.com/legal/licenses.html"
-                                        target="_blank"
                                     >
                                         {{ $t('commons.login.licenseHelper') }}
                                     </a>
@@ -200,8 +198,6 @@
                                         {{ $t('commons.button.agree') }}
                                         <a
                                             class="agree"
-                                            href="https://www.fit2cloud.com/legal/licenses.html"
-                                            target="_blank"
                                         >
                                             {{ $t('commons.login.licenseHelper') }}
                                         </a>

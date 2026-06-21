@@ -215,7 +215,7 @@ const message = {
             logout: 'Sair',
             agreeTitle: 'Termo de Aceite',
             agreeContent:
-                'Para proteger melhor seus direitos e interesses legítimos, leia e concorde com o seguinte termo &laquo; <a href="https://www.fit2cloud.com/legal/licenses.html" target="_blank">Acordo de Licença Comunitária</a> &raquo;',
+                'Para proteger melhor seus direitos e interesses legítimos, leia e concorde com o seguinte termo &laquo; Acordo de Licença Comunitária &raquo;',
             passkeyFailed: 'Falha no login com Passkey, tente novamente',
             passkeyNotSupported: 'O navegador ou ambiente atual não suporta passkeys',
             passkeyToPassword: 'Está com problemas para usar uma passkey? Use a senha',
@@ -3515,7 +3515,7 @@ const message = {
         encryptionAlgorithm: 'Algoritmo de criptografia',
         notSecurity: '(não seguro)',
         encryptHelper:
-            "O Let's Encrypt tem um limite de frequência para a emissão de certificados, mas é suficiente para atender necessidades normais. Operações muito frequentes podem causar falha na emissão. Para restrições específicas, consulte <a target='_blank' href='https://letsencrypt.org/zh-cn/docs/rate-limits/'>documentação oficial</a>",
+            "O Let's Encrypt tem um limite de frequência para a emissão de certificados, mas é suficiente para atender necessidades normais. Operações muito frequentes podem causar falha na emissão. Para restrições específicas, consulte documentação oficial",
         ipValue: 'Valor',
         ext: 'Extensão de arquivo',
         wafInputHelper: 'Digite os dados por linha, uma linha por vez',

@@ -67,6 +67,7 @@ func setWebStatic(rootRouter *gin.RouterGroup) {
 
 func Routers() *gin.Engine {
 	Router = gin.New()
+	Router.Use(offlineBrowserPolicy())
 	Router.Use(i18n.UseI18n())
 	Router.Use(middleware.WhiteAllow())
 	Router.Use(middleware.BindDomain())
@@ -107,6 +108,16 @@ func Routers() *gin.Engine {
 	})
 
 	return Router
+}
+
+func offlineBrowserPolicy() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if global.CONF.Base.IsOffline {
+			c.Header("Content-Security-Policy", "default-src 'self' data: blob:; connect-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'self'")
+			c.Header("Referrer-Policy", "no-referrer")
+		}
+		c.Next()
+	}
 }
 
 func RegisterImages(rootRouter *gin.RouterGroup) {

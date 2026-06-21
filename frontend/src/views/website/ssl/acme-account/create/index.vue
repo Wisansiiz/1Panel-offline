@@ -60,15 +60,6 @@
                         <el-form-item label="EAB HmacKey" prop="eabHmacKey">
                             <el-input type="textarea" :rows="3" v-model.trim="account.eabHmacKey"></el-input>
                         </el-form-item>
-                        <el-link
-                            v-if="account.type == 'google'"
-                            class="ml-1.5"
-                            type="primary"
-                            target="_blank"
-                            href="https://cloud.google.com/certificate-manager/docs/public-ca-tutorial?hl=zh-cn"
-                        >
-                            {{ $t('ssl.googleHelper') }}
-                        </el-link>
                     </div>
                 </el-form>
             </el-col>

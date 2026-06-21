@@ -73,6 +73,9 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Verify offline network policy
+        run: ./offline/check-public-network.sh
+
       - name: Build ${{ matrix.arch }} offline bundle
         env:
           BUILD_VERSION: ${{ needs.prepare.outputs.version }}
@@ -145,8 +148,13 @@ jobs:
           sleep 5
           sudo systemctl is-active --quiet containerd.service
           sudo systemctl is-active --quiet docker.service
+          sudo systemctl is-active --quiet 1panel-offline-egress.service
           sudo systemctl is-active --quiet 1panel-agent.service
           sudo systemctl is-active --quiet 1panel-core.service
+          sudo iptables -C DOCKER-USER -j 1PANEL-OFFLINE
+          sudo iptables -C 1PANEL-OFFLINE -j REJECT
+          curl -fsSI http://127.0.0.1:19999/offline-smoke \
+            | grep -qi '^Content-Security-Policy:'
           sudo docker info
           sudo docker compose version
           sudo docker image inspect \

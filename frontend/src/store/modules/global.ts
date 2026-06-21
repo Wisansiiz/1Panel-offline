@@ -6,8 +6,7 @@ import { DeviceType } from '@/enums/app';
 import i18n, { setActiveLocale } from '@/lang';
 import { isMasterOnlyPermissionCode, setMasterOnlyPermissionCodes, toManageCode } from '@/utils/permission-codes';
 
-const CN_DOCS_URL = 'https://1panel.cn/docs/v2';
-const INTL_DOCS_URL = 'https://docs.1panel.pro/v2';
+const OFFLINE_DOCS_URL = '';
 
 const GlobalStore = defineStore('GlobalState', {
     state: (): GlobalState => ({
@@ -84,12 +83,7 @@ const GlobalStore = defineStore('GlobalState', {
             state.isAdmin ||
             state.nodeRoles.some((item) => item.nodeName === state.currentNode && item.roleName === 'Node Admin'),
         docsUrl: (state) => {
-            if (state.docWithRegion) {
-                return state.isIntl ? INTL_DOCS_URL : CN_DOCS_URL;
-            }
-            const lang = state.language.toLowerCase();
-            const isChinese = lang === 'zh';
-            return isChinese ? CN_DOCS_URL : INTL_DOCS_URL;
+            return OFFLINE_DOCS_URL;
         },
         isMaster: (state) => state.currentNode === 'local',
         isMobile: (state) => state.device === DeviceType.Mobile,

@@ -4,7 +4,6 @@ export interface AgentProviderLogo {
     background: string;
     color: string;
     borderColor?: string;
-    source?: string;
 }
 
 const asset = (name: string) => new URL(`../assets/images/ai-providers/${name}`, import.meta.url).href;
@@ -16,7 +15,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#111827',
         borderColor: '#dcdfe6',
-        source: 'https://github.com/ollama/ollama/blob/main/docs/ollama-logo.svg',
     },
     vllm: {
         src: asset('vllm.svg'),
@@ -24,7 +22,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#4338ca',
         borderColor: '#dcdfe6',
-        source: 'https://vllm.ai/vLLM-Logo.svg',
     },
     deepseek: {
         src: asset('deepseek.png'),
@@ -32,7 +29,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#4d6bfe',
         borderColor: '#dcdfe6',
-        source: 'https://cdn.deepseek.com/logo.png',
     },
     'bailian-coding-plan': {
         src: asset('aliyun.webp'),
@@ -40,7 +36,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#ff6a00',
         borderColor: '#dcdfe6',
-        source: 'https://www.alibabacloud.com/',
     },
     'ark-coding-plan': {
         src: asset('volcengine.png'),
@@ -48,7 +43,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#1664ff',
         borderColor: '#dcdfe6',
-        source: 'https://www.volcengine.com/',
     },
     zai: {
         src: asset('zai.webp'),
@@ -56,7 +50,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#111827',
         borderColor: '#dcdfe6',
-        source: 'https://z.ai/',
     },
     minimax: {
         src: asset('minimax.ico'),
@@ -64,7 +57,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#2563eb',
         borderColor: '#dcdfe6',
-        source: 'https://www.minimax.io/',
     },
     xiaomi: {
         src: asset('xiaomi.ico'),
@@ -72,7 +64,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#ff6900',
         borderColor: '#dcdfe6',
-        source: 'https://www.mi.com/favicon.ico',
     },
     kimi: {
         src: asset('kimi.svg'),
@@ -80,7 +71,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#111827',
         borderColor: '#dcdfe6',
-        source: 'https://moonshotai.github.io/Branding-Guide/',
     },
     'kimi-coding': {
         src: asset('kimi.svg'),
@@ -88,7 +78,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#111827',
         borderColor: '#dcdfe6',
-        source: 'https://moonshotai.github.io/Branding-Guide/',
     },
     openai: {
         src: asset('openai.svg'),
@@ -96,7 +85,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#111827',
         borderColor: '#dcdfe6',
-        source: 'https://openai.com/brand/',
     },
     openrouter: {
         src: asset('openrouter.png'),
@@ -104,7 +92,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#101828',
         borderColor: '#dcdfe6',
-        source: 'https://openrouter.ai/',
     },
     anthropic: {
         src: asset('anthropic.png'),
@@ -112,7 +99,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#141413',
         borderColor: '#dcdfe6',
-        source: 'https://www.anthropic.com/',
     },
     gemini: {
         src: asset('gemini.webp'),
@@ -120,7 +106,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#1a73e8',
         borderColor: '#dcdfe6',
-        source: 'https://gemini.google.com/',
     },
     moonshot: {
         src: asset('kimi.svg'),
@@ -128,7 +113,6 @@ const providerLogos: Record<string, AgentProviderLogo> = {
         background: '#ffffff',
         color: '#111827',
         borderColor: '#dcdfe6',
-        source: 'https://moonshotai.github.io/Branding-Guide/',
     },
 };
 

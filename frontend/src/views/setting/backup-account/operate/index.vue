@@ -530,29 +530,7 @@ const toDoc = (type: string) => {
     window.open(docsUrl.value + '/user_manual/settings/' + uri, '_blank', 'noopener,noreferrer');
 };
 const jumpForCode = async (formEl: FormInstance | undefined) => {
-    if (!formEl) return;
-    const result = await formEl.validateField('varsJson.client_id', callback);
-    if (!result) {
-        return;
-    }
-    const result1 = await formEl.validateField('varsJson.redirect_uri', callback);
-    if (!result1) {
-        return;
-    }
-    let client_id = dialogData.value.rowData.varsJson['client_id'];
-    let redirect_uri = dialogData.value.rowData.varsJson['redirect_uri'];
-    if (isOneDrive()) {
-        let commonUrl = `response_type=code&client_id=${client_id}&redirect_uri=${redirect_uri}&scope=offline_access+Files.ReadWrite.All+User.Read`;
-        if (!dialogData.value.rowData!.varsJson['isCN']) {
-            window.open('https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' + commonUrl, '_blank');
-        } else {
-            window.open('https://login.chinacloudapi.cn/common/oauth2/v2.0/authorize?' + commonUrl, '_blank');
-        }
-        return;
-    }
-
-    let url = `https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?client_id=${client_id}&response_type=code&redirect_uri=${redirect_uri}&scope=openid%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fphotoslibrary&access_type=offline&prompt=consent&service=lso&o2v=1&ddm=1&flowName=GeneralOAuthFlow`;
-    window.open(url, '_blank');
+    return;
 };
 function callback(error: any) {
     if (error) {

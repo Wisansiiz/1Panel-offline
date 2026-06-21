@@ -120,11 +120,7 @@ const handleExceed: UploadProps['onExceed'] = (files) => {
 };
 
 const toEdition = () => {
-    if (!isIntl.value) {
-        window.open('https://1panel.cn/versions.html' + '', '_blank', 'noopener,noreferrer');
-    } else {
-        window.open('https://1panel.pro/pricing' + '', '_blank', 'noopener,noreferrer');
-    }
+    return;
 };
 
 const submit = async () => {

@@ -161,12 +161,7 @@ function loadExpiresAlert() {
 }
 
 function goXpack() {
-    if (isIntl.value && !isEnterprise.value) {
-        window.open('https://1panel.hk/pricing', '_blank', 'noopener,noreferrer');
-        return;
-    }
-    const url = isEnterprise.value ? 'https://1panel.cn/enterprise.html' : 'https://www.lxware.cn/1panel';
-    window.open(url, '_blank', 'noopener,noreferrer');
+    return;
 }
 
 function handleExpiresAlertClose() {

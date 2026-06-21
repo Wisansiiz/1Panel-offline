@@ -17,24 +17,6 @@
                     <div class="flex justify-center">
                         <SystemUpgrade class="upgrade" />
                     </div>
-                    <div class="flex w-full justify-center my-5 flex-wrap md:flex-row gap-4">
-                        <el-link @click="toDoc" class="system-link">
-                            <el-icon><Document /></el-icon>
-                            <span>{{ $t('setting.doc2') }}</span>
-                        </el-link>
-                        <el-link @click="toGithub" class="system-link">
-                            <svg-icon iconName="p-huaban88"></svg-icon>
-                            <span>{{ $t('setting.project') }}</span>
-                        </el-link>
-                        <el-link @click="toIssue" class="system-link">
-                            <svg-icon iconName="p-bug"></svg-icon>
-                            <span>{{ $t('setting.issue') }}</span>
-                        </el-link>
-                        <el-link @click="toGithubStar" class="system-link">
-                            <svg-icon iconName="p-star"></svg-icon>
-                            <span>{{ $t('setting.star') }}</span>
-                        </el-link>
-                    </div>
                 </div>
             </template>
         </LayoutContent>
@@ -45,24 +27,11 @@
 import { getSystemAvailable } from '@/api/modules/setting';
 import { onMounted, ref } from 'vue';
 import SystemUpgrade from '@/components/system-upgrade/index.vue';
-import { useGlobalStore } from '@/composables/useGlobalStore';
 import PrimaryLogo from '@/assets/images/1panel-logo.svg?component';
-const { docsUrl, themeConfig } = useGlobalStore();
+import { useGlobalStore } from '@/composables/useGlobalStore';
+const { themeConfig } = useGlobalStore();
 const loading = ref();
 const logoLoadFailed = ref(false);
-
-const toDoc = () => {
-    window.open(docsUrl.value, '_blank', 'noopener,noreferrer');
-};
-const toGithub = () => {
-    window.open('https://github.com/1Panel-dev/1Panel', '_blank', 'noopener,noreferrer');
-};
-const toIssue = () => {
-    window.open('https://github.com/1Panel-dev/1Panel/issues', '_blank', 'noopener,noreferrer');
-};
-const toGithubStar = () => {
-    window.open('https://github.com/1Panel-dev/1Panel', '_blank', 'noopener,noreferrer');
-};
 
 onMounted(() => {
     getSystemAvailable();

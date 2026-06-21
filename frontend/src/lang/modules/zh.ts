@@ -202,7 +202,7 @@ const message = {
             errorAgree: '请点击同意社区软件许可协议',
             agreeTitle: '服务协议及隐私保护',
             agreeContent:
-                '为了更好的保障您的合法权益，请您阅读并同意以下协议 &laquo; <a href="https://www.fit2cloud.com/legal/licenses.html" target="_blank"> 飞致云社区软件许可协议 </a> &raquo;',
+                '为了更好的保障您的合法权益，请您阅读并同意以下协议 &laquo;  飞致云社区软件许可协议  &raquo;',
             logout: '退出登录',
         },
         rule: {
@@ -3081,7 +3081,7 @@ const message = {
         encryptionAlgorithm: '加密算法',
         notSecurity: '（不安全）',
         encryptHelper:
-            "Let's Encrypt 签发证书有频率限制，但足以满足正常需求，过于频繁操作会导致签发失败。具体限制请看 <a target=“_blank” href='https://letsencrypt.org/zh-cn/docs/rate-limits/'>官方文档</a> ",
+            "Let's Encrypt 签发证书有频率限制，但足以满足正常需求，过于频繁操作会导致签发失败。具体限制请看 官方文档 ",
         ipValue: '值',
         ext: '文件扩展名',
         wafInputHelper: '按行输入数据，一行一个',

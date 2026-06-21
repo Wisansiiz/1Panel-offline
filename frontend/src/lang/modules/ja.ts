@@ -216,7 +216,7 @@ const message = {
             logout: 'ログアウト',
             agreeTitle: '合意',
             agreeContent:
-                'あなたの正当な権利と利益をよりよく保護するために、次の契約とラコを読んで同意してください。<a href = "https://www.fit2cloud.com/legal/licenses.html" target="_blank">コミュニティライセンス契約</a>＆raquo;',
+                'あなたの正当な権利と利益をよりよく保護するために、次の契約とラコを読んで同意してください。コミュニティライセンス契約＆raquo;',
             passkeyFailed: 'パスキーでのログインに失敗しました。再試行してください',
             passkeyNotSupported: '現在のブラウザまたは環境はパスキーに対応していません',
             passkeyToPassword: 'パスキーが使えませんか？パスワードでログインしてください',
@@ -3341,7 +3341,7 @@ const message = {
         encryptionAlgorithm: '暗号化アルゴリズム',
         notSecurity: '（安全ではない）',
         encryptHelper:
-            "暗号化しようと証明書を発行するための周波数制限がありますが、通常のニーズを満たすには十分です。頻繁に操作すると、発行の失敗が発生します。特定の制限については、<a target='_blank' href='https://letsencrypt.org/zh-cn/docs /rate-limits/'>公式ドキュメント</a>を参照してください。",
+            "暗号化しようと証明書を発行するための周波数制限がありますが、通常のニーズを満たすには十分です。頻繁に操作すると、発行の失敗が発生します。特定の制限については、公式ドキュメントを参照してください。",
         ipValue: '価値',
         ext: 'ファイル拡張子',
         wafInputHelper: 'ラインごとに入力します。1つの行',

@@ -1,4 +1,5 @@
 import { resolve } from 'path';
+import { rmSync } from 'node:fs';
 import { wrapperEnv } from './src/utils/get-env';
 import { visualizer } from 'rollup-plugin-visualizer';
 import viteCompression from 'vite-plugin-compression';
@@ -22,6 +23,17 @@ function patchCodeFilterOverflow(): Plugin {
             if (target?.transform && typeof target.transform === 'object' && target.transform.filter) {
                 (target.transform.filter as Record<string, any>).code = 'import.meta.url';
             }
+        },
+    };
+}
+
+function cleanGeneratedWebAssets(): Plugin {
+    return {
+        name: 'clean-generated-web-assets',
+        buildStart() {
+            const webDir = resolve(__dirname, '../core/cmd/server/web');
+            rmSync(resolve(webDir, 'assets'), { recursive: true, force: true });
+            rmSync(resolve(webDir, 'index.html'), { force: true });
         },
     };
 }
@@ -92,6 +104,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             },
         },
         plugins: [
+            cleanGeneratedWebAssets(),
             patchCodeFilterOverflow(),
             vue(),
             eslintPlugin({
@@ -130,6 +143,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         build: {
             sourcemap: false,
             outDir: '../core/cmd/server/web',
+            emptyOutDir: false,
             minify: 'oxc',
             target: 'esnext',
             cssCodeSplit: false,

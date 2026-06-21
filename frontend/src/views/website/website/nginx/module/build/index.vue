@@ -2,24 +2,7 @@
     <DrawerPro v-model="open" :header="$t('nginx.build')" size="normal" @close="handleClose">
         <el-form ref="buildForm" label-position="top" :model="build" :rules="rules">
             <el-form-item :label="$t('nginx.mirrorUrl')" prop="mirror">
-                <el-select v-model="build.mirror">
-                    <el-option
-                        value="http://archive.ubuntu.com/ubuntu/"
-                        label="http://archive.ubuntu.com/ubuntu/"
-                    ></el-option>
-                    <el-option
-                        value="http://mirrors.aliyun.com/ubuntu/"
-                        label="http://mirrors.aliyun.com/ubuntu/"
-                    ></el-option>
-                    <el-option
-                        value="http://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
-                        label="http://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
-                    ></el-option>
-                    <el-option
-                        value="http://mirrors.ustc.edu.cn/ubuntu/"
-                        label="http://mirrors.ustc.edu.cn/ubuntu/"
-                    ></el-option>
-                </el-select>
+                <el-input v-model.trim="build.mirror" />
             </el-form-item>
         </el-form>
         <template #footer>
@@ -44,7 +27,7 @@ const open = ref(false);
 const loading = ref(false);
 const buildForm = ref<FormInstance>();
 const build = ref({
-    mirror: 'http://archive.ubuntu.com/ubuntu',
+    mirror: '',
 });
 const rules = {
     mirror: [Rules.requiredSelect],

@@ -219,7 +219,7 @@ const message = {
             logout: 'Çıkış',
             agreeTitle: 'Sözleşme',
             agreeContent:
-                'Meşru hak ve çıkarlarınızı daha iyi korumak için lütfen aşağıdaki sözleşmeyi okuyun ve kabul edin &laquo; <a href = "https://www.fit2cloud.com/legal/licenses.html" target = "_blank" > Topluluk Lisans Sözleşmesi </a> &raquo;',
+                'Meşru hak ve çıkarlarınızı daha iyi korumak için lütfen aşağıdaki sözleşmeyi okuyun ve kabul edin &laquo;  Topluluk Lisans Sözleşmesi  &raquo;',
             passkeyFailed: 'Passkey ile giriş başarısız oldu, lütfen tekrar deneyin',
             passkeyNotSupported: 'Mevcut tarayıcı veya ortam passkey desteklemiyor',
             passkeyToPassword: 'Passkey kullanırken sorun mu yaşıyorsunuz? Şifreyi kullanın',
@@ -3382,7 +3382,7 @@ const message = {
         encryptionAlgorithm: 'Şifreleme algoritması',
         notSecurity: '(güvenli değil)',
         encryptHelper:
-            "Let's Encrypt, sertifika verme sıklığı için bir sınırlama getirir, ancak bu normal ihtiyaçları karşılamak için yeterlidir. Çok sık işlemler, verme işleminin başarısız olmasına neden olur. Özel kısıtlamalar için lütfen <a target='_blank' href='https://letsencrypt.org/zh-cn/docs /rate-limits/'>resmi belgeye</a> bakın ",
+            "Let's Encrypt, sertifika verme sıklığı için bir sınırlama getirir, ancak bu normal ihtiyaçları karşılamak için yeterlidir. Çok sık işlemler, verme işleminin başarısız olmasına neden olur. Özel kısıtlamalar için lütfen resmi belgeye bakın ",
         ipValue: 'Değer',
         ext: 'dosya uzantısı',
         wafInputHelper: 'Verileri satır satır girin, her satır bir veri',

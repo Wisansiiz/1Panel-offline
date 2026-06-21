@@ -36,7 +36,7 @@ const saving = ref(false);
 const agentId = ref(0);
 const agentType = ref<AI.AgentType>('openclaw');
 const formRef = ref<FormInstance>();
-const defaultNPMRegistry = 'https://registry.npmjs.org/';
+const defaultNPMRegistry = '';
 
 const form = reactive<AI.AgentOtherConfig>({
     userTimezone: '',
@@ -44,12 +44,7 @@ const form = reactive<AI.AgentOtherConfig>({
     npmRegistry: defaultNPMRegistry,
 });
 
-const npmRegistryOptions = [
-    defaultNPMRegistry,
-    'https://registry.npmmirror.com',
-    'https://mirrors.cloud.tencent.com/npm/',
-    'https://repo.huaweicloud.com/repository/npm/',
-];
+const npmRegistryOptions: string[] = [];
 
 const validateNPMRegistry = (_rule: any, value: string, callback: (error?: Error) => void) => {
     if (!value) {

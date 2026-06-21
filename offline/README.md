@@ -5,6 +5,14 @@
 
 离线版默认启用 `is_offline`，不会自动同步远程应用商店、检查在线升级、访问在线文档索引、同步公网 NTP、下载语言/GeoIP 资源或发送安装统计。应用启动使用 `docker compose --pull never`，镜像拉取 API 也会被服务端拒绝。
 
+安装后会同时启用三层外网保护：
+
+- Core/Agent 的 systemd 服务只允许回环、局域网、链路本地和 IPv6 ULA 地址；
+- Docker 的 `DOCKER-USER`/`ip6tables` 规则拒绝容器访问公网；
+- Web 界面通过 CSP 和导航拦截拒绝浏览器访问公网地址。
+
+界面不再预置公网 npm、Composer、Debian 或 Ubuntu 软件源。需要相关功能时，必须手动填写企业内网镜像地址。
+
 标准离线包内置 Docker Engine 29.6.0、配套的 containerd/runc，以及 Docker Compose 2.40.3。目标服务器没有 Docker 时，安装程序会自动安装并启动离线运行时。
 
 ## 应用商店策略

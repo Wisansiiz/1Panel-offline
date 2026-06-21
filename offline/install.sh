@@ -136,6 +136,76 @@ fi
 wait_for_docker
 docker compose version
 
+install_container_egress_policy() {
+    iptables -N 1PANEL-OFFLINE 2>/dev/null || true
+    iptables -F 1PANEL-OFFLINE
+    iptables -A 1PANEL-OFFLINE -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    iptables -A 1PANEL-OFFLINE -d 10.0.0.0/8 -j ACCEPT
+    iptables -A 1PANEL-OFFLINE -d 172.16.0.0/12 -j ACCEPT
+    iptables -A 1PANEL-OFFLINE -d 192.168.0.0/16 -j ACCEPT
+    iptables -A 1PANEL-OFFLINE -d 169.254.0.0/16 -j ACCEPT
+    iptables -A 1PANEL-OFFLINE -d 127.0.0.0/8 -j ACCEPT
+    iptables -A 1PANEL-OFFLINE -j REJECT
+    iptables -C DOCKER-USER -j 1PANEL-OFFLINE 2>/dev/null \
+        || iptables -I DOCKER-USER 1 -j 1PANEL-OFFLINE
+    if command -v ip6tables >/dev/null 2>&1 && ip6tables -nL DOCKER-USER >/dev/null 2>&1; then
+        ip6tables -N 1PANEL-OFFLINE 2>/dev/null || true
+        ip6tables -F 1PANEL-OFFLINE
+        ip6tables -A 1PANEL-OFFLINE -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        ip6tables -A 1PANEL-OFFLINE -d fc00::/7 -j ACCEPT
+        ip6tables -A 1PANEL-OFFLINE -d fe80::/10 -j ACCEPT
+        ip6tables -A 1PANEL-OFFLINE -d ::1/128 -j ACCEPT
+        ip6tables -A 1PANEL-OFFLINE -j REJECT
+        ip6tables -C DOCKER-USER -j 1PANEL-OFFLINE 2>/dev/null \
+            || ip6tables -I DOCKER-USER 1 -j 1PANEL-OFFLINE
+    fi
+
+    cat >/usr/local/sbin/1panel-offline-egress <<'EOF'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+iptables -N 1PANEL-OFFLINE 2>/dev/null || true
+iptables -F 1PANEL-OFFLINE
+iptables -A 1PANEL-OFFLINE -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A 1PANEL-OFFLINE -d 10.0.0.0/8 -j ACCEPT
+iptables -A 1PANEL-OFFLINE -d 172.16.0.0/12 -j ACCEPT
+iptables -A 1PANEL-OFFLINE -d 192.168.0.0/16 -j ACCEPT
+iptables -A 1PANEL-OFFLINE -d 169.254.0.0/16 -j ACCEPT
+iptables -A 1PANEL-OFFLINE -d 127.0.0.0/8 -j ACCEPT
+iptables -A 1PANEL-OFFLINE -j REJECT
+iptables -C DOCKER-USER -j 1PANEL-OFFLINE 2>/dev/null || iptables -I DOCKER-USER 1 -j 1PANEL-OFFLINE
+if command -v ip6tables >/dev/null 2>&1 && ip6tables -nL DOCKER-USER >/dev/null 2>&1; then
+    ip6tables -N 1PANEL-OFFLINE 2>/dev/null || true
+    ip6tables -F 1PANEL-OFFLINE
+    ip6tables -A 1PANEL-OFFLINE -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    ip6tables -A 1PANEL-OFFLINE -d fc00::/7 -j ACCEPT
+    ip6tables -A 1PANEL-OFFLINE -d fe80::/10 -j ACCEPT
+    ip6tables -A 1PANEL-OFFLINE -d ::1/128 -j ACCEPT
+    ip6tables -A 1PANEL-OFFLINE -j REJECT
+    ip6tables -C DOCKER-USER -j 1PANEL-OFFLINE 2>/dev/null || ip6tables -I DOCKER-USER 1 -j 1PANEL-OFFLINE
+fi
+EOF
+    chmod 0755 /usr/local/sbin/1panel-offline-egress
+
+    cat >/etc/systemd/system/1panel-offline-egress.service <<'EOF'
+[Unit]
+Description=1Panel Offline Container Egress Policy
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/1panel-offline-egress
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl daemon-reload
+    systemctl enable --now 1panel-offline-egress.service
+}
+
+install_container_egress_policy
+
 install -m 0755 "${PACKAGE_DIR}/bin/1panel-core" /usr/local/bin/1panel-core
 install -m 0755 "${PACKAGE_DIR}/bin/1panel-agent" /usr/local/bin/1panel-agent
 install -m 0755 "${PACKAGE_DIR}/import-app.sh" /usr/local/bin/1panel-import-app

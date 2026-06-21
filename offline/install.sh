@@ -341,7 +341,7 @@ systemctl daemon-reload
 systemctl enable --now 1panel-agent 1panel-core
 
 echo "1Panel offline edition installed."
-echo "Bundled OpenResty/MySQL applications will appear after the local app catalog finishes syncing."
+echo "Bundled OpenResty will appear after the local app catalog finishes syncing."
 echo "URL: http://<server-ip>:${PANEL_PORT}/${PANEL_ENTRANCE}"
 echo "Username: ${PANEL_USERNAME}"
 echo "Password: ${PANEL_PASSWORD}"

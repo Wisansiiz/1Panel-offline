@@ -12,8 +12,8 @@
 This edition is designed for enterprise intranets, isolated data centers and
 other air-gapped environments. Runtime services default to offline mode and
 block automatic internet access. Standard releases include the Docker runtime
-and selected OpenResty/MySQL images, but intentionally contain no application
-catalog.
+and the OpenResty image and application definition. MySQL is distributed as
+separate optional import bundles.
 
 [中文说明](docs/README.zh-Hans.md) · [Offline build and deployment guide](offline/README.md)
 
@@ -25,8 +25,8 @@ catalog.
 - Prevents Docker image pulls and starts Compose projects with `--pull never`.
 - Installs bundled Docker Engine, containerd, runc and Docker Compose when the
   target host has no Docker installation.
-- Includes only the OpenResty/MySQL application definitions matching bundled
-  images; users import definitions and images for any additional applications.
+- Includes only the OpenResty application definition and image; MySQL and
+  other applications are installed from separate import bundles.
 - Builds reproducible `linux/amd64` and `linux/arm64` offline bundles.
 - Installs systemd network restrictions that only permit loopback and private
   network ranges.
@@ -36,7 +36,6 @@ Prepackaged images:
 | Application | amd64 | arm64 |
 |---|---|---|
 | OpenResty | `1.27.1.2-2-3-focal` | `1.27.1.2-2-3-focal` |
-| MySQL | `8.4.6`, `8.0.43`, `5.7.44`, `5.6.51` | `8.4.6`, `8.0.43` |
 
 Bundled runtime: Docker Engine `29.6.0` and Docker Compose `2.40.3`.
 

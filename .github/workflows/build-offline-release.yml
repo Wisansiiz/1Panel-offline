@@ -99,17 +99,10 @@ jobs:
           test -x "${bundle}/uninstall.sh"
           "${bundle}/uninstall.sh" --help >/dev/null
           test -s "${bundle}/images/images.tar"
+          test "$(cat "${bundle}/images/images.txt")" = "1panel/openresty:1.27.1.2-2-3-focal"
           test -s "${bundle}/appstore-data.yaml"
           test -f "${bundle}/catalog/openresty/1.27.1.2-2-3-focal/docker-compose.yml"
-          test -f "${bundle}/catalog/mysql/8.4.6/docker-compose.yml"
-          test -f "${bundle}/catalog/mysql/8.0.43/docker-compose.yml"
-          if [[ "${{ matrix.arch }}" == "amd64" ]]; then
-            test -f "${bundle}/catalog/mysql/5.7.44/docker-compose.yml"
-            test -f "${bundle}/catalog/mysql/5.6.51/docker-compose.yml"
-          else
-            test ! -e "${bundle}/catalog/mysql/5.7.44"
-            test ! -e "${bundle}/catalog/mysql/5.6.51"
-          fi
+          test ! -e "${bundle}/catalog/mysql"
           if [[ "${{ matrix.arch }}" == "amd64" ]]; then
             "${bundle}/runtime/docker/docker" --version
             "${bundle}/runtime/docker/dockerd" --version
@@ -173,13 +166,9 @@ jobs:
           sudo docker info
           sudo docker compose version
           sudo docker image inspect \
-            1panel/openresty:1.27.1.2-2-3-focal \
-            mysql:8.4.6 \
-            mysql:8.0.43 \
-            mysql:5.7.44 \
-            mysql:5.6.51 >/dev/null
+            1panel/openresty:1.27.1.2-2-3-focal >/dev/null
           test -f /opt/1panel/resource/apps/remote/openresty/1.27.1.2-2-3-focal/docker-compose.yml
-          test -f /opt/1panel/resource/apps/remote/mysql/8.4.6/docker-compose.yml
+          test ! -e /opt/1panel/resource/apps/remote/mysql
           test -f /opt/1panel/resource/offline/data.yaml
 
   app-bundles:
@@ -296,7 +285,7 @@ jobs:
             非官方 1Panel 社区版离线修改版。
 
             包内包含 Docker Engine、containerd、runc、Docker Compose
-            以及 OpenResty/MySQL 基础镜像和对应应用定义。
+            以及 OpenResty 基础镜像和对应应用定义。
             Release 同时提供 MySQL 8、MySQL 5、Redis、Java 8、Java 17、
             Java 21 的独立离线导入包。
 

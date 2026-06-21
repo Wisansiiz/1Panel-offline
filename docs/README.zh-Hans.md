@@ -9,8 +9,8 @@
 > [本仓库 Issues](https://github.com/Wisansiiz/1Panel-offline/issues)。
 
 该版本面向企业内网、离线机房和涉密环境。服务默认启用离线模式，不主动访问
-互联网。标准包内置 Docker 运行时、OpenResty/MySQL 基础镜像及其离线应用定义。
-其他应用由用户按需导入应用定义和镜像。
+互联网。标准包内置 Docker 运行时、OpenResty 基础镜像及其离线应用定义。
+MySQL 和其他应用通过独立离线导入包按需安装。
 
 ## 离线修改内容
 
@@ -18,7 +18,7 @@
 - 禁止 Docker 拉取镜像，Compose 使用 `--pull never` 启动；
 - 移除离线版中的 AI 菜单、快捷入口和 AI API 路由；
 - 目标服务器没有 Docker 时，自动安装内置的 Docker Engine、containerd、runc 和 Compose；
-- 应用商店自动显示包内 OpenResty/MySQL，以及用户自行导入且镜像齐全的应用；
+- 应用商店自动显示包内 OpenResty，以及用户自行导入且镜像齐全的应用；
 - 自动构建 `linux/amd64` 与 `linux/arm64` 两种离线包；
 - systemd 服务仅允许访问本机和私有网络地址。
 
@@ -27,7 +27,6 @@
 | 应用 | x86_64 / amd64 | arm64 |
 |---|---|---|
 | OpenResty | `1.27.1.2-2-3-focal` | `1.27.1.2-2-3-focal` |
-| MySQL | `8.4.6`、`8.0.43`、`5.7.44`、`5.6.51` | `8.4.6`、`8.0.43` |
 
 内置运行时：Docker Engine `29.6.0`、Docker Compose `2.40.3`。
 

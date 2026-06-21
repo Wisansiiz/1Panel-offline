@@ -10,6 +10,16 @@ ARCH="$1"
 APPS_DIR="$2"
 DATA_YAML="$3"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APPSTORE_REPOSITORY="${APPSTORE_REPOSITORY:-1Panel-dev/appstore}"
+OPENRESTY_APPSTORE_REF="${OPENRESTY_APPSTORE_REF:-e955e97acbf552ffcdc35f9e14f987bc46471ae0}"
+OPENRESTY_VERSION="1.27.1.2-2-3-focal"
+
+for command in curl jq; do
+    command -v "${command}" >/dev/null 2>&1 || {
+        echo "missing required command: ${command}" >&2
+        exit 1
+    }
+done
 
 case "${ARCH}" in
     amd64|arm64) ;;
@@ -40,6 +50,13 @@ additionalProperties:
         en: Web Server
         zh: Web 服务器
         zh-hant: Web 伺服器
+    - key: Runtime
+      name: Runtime
+      sort: 3
+      locales:
+        en: Runtime
+        zh: 运行环境
+        zh-hant: 執行環境
 EOF
 
 cat >"${APPS_DIR}/openresty/data.yml" <<EOF
@@ -72,64 +89,64 @@ cat >"${APPS_DIR}/openresty/README.md" <<'EOF'
 安装后可在 1Panel 的“已安装应用”中统一管理。
 EOF
 
-openresty_dir="${APPS_DIR}/openresty/1.27.1.2-2-3-focal"
+openresty_dir="${APPS_DIR}/openresty/${OPENRESTY_VERSION}"
 mkdir -p "${openresty_dir}"
-cat >"${openresty_dir}/data.yml" <<'EOF'
-additionalProperties:
-  supportVersion: 2.0
-  formFields:
-    - default: 80
-      envKey: PANEL_APP_PORT_HTTP
-      labelEn: HTTP Port
-      labelZh: HTTP 端口
-      required: true
-      rule: paramPort
-      type: number
-      label:
-        en: HTTP Port
-        zh: HTTP 端口
-        zh-hant: HTTP 端口
-    - default: 443
-      envKey: PANEL_APP_PORT_HTTPS
-      labelEn: HTTPS Port
-      labelZh: HTTPS 端口
-      required: true
-      rule: paramPort
-      type: number
-      label:
-        en: HTTPS Port
-        zh: HTTPS 端口
-        zh-hant: HTTPS 端口
-    - default: www
-      envKey: WEBSITE_DIR
-      labelEn: Website Directory
-      labelZh: 网站目录
-      required: true
-      type: text
-      label:
-        en: Website Directory
-        zh: 网站目录
-        zh-hant: 網站目錄
-EOF
+
+tree_json="$(mktemp)"
+trap 'rm -f "${tree_json}"' EXIT
+github_headers=(-H "Accept: application/vnd.github+json")
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+    github_headers+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+fi
+curl --fail --silent --show-error --location \
+    --retry 3 --retry-delay 2 --retry-all-errors \
+    "${github_headers[@]}" \
+    "https://api.github.com/repos/${APPSTORE_REPOSITORY}/git/trees/${OPENRESTY_APPSTORE_REF}?recursive=1" \
+    -o "${tree_json}"
+
+version_prefix="apps/openresty/${OPENRESTY_VERSION}/"
+download_openresty_file() {
+    local remote_path="$1"
+    local relative_path destination
+    relative_path="${remote_path#${version_prefix}}"
+    destination="${openresty_dir}/${relative_path}"
+    mkdir -p "$(dirname "${destination}")"
+    curl --fail --silent --show-error --location \
+        --retry 3 --retry-delay 2 --retry-all-errors \
+        "https://raw.githubusercontent.com/${APPSTORE_REPOSITORY}/${OPENRESTY_APPSTORE_REF}/${remote_path}" \
+        -o "${destination}"
+}
+export -f download_openresty_file
+export APPSTORE_REPOSITORY OPENRESTY_APPSTORE_REF openresty_dir version_prefix
+
+jq -r --arg prefix "${version_prefix}" '
+    .tree[]
+    | select(.type == "blob")
+    | select(.path | startswith($prefix))
+    | select((.path | startswith($prefix + "build/")) | not)
+    | .path
+' "${tree_json}" | xargs -P 12 -n 1 bash -c 'download_openresty_file "$1"' _
+
 cat >"${openresty_dir}/docker-compose.yml" <<'EOF'
 services:
   openresty:
     image: 1panel/openresty:1.27.1.2-2-3-focal
     container_name: ${CONTAINER_NAME}
     restart: always
-    ports:
-      - ${PANEL_APP_PORT_HTTP}:80
-      - ${PANEL_APP_PORT_HTTPS}:443
-    networks:
-      - 1panel-network
+    network_mode: host
     volumes:
-      - ./html:/usr/local/openresty/nginx/html
-      - ./log:/usr/local/openresty/nginx/logs
+      - ./conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ./conf/fastcgi_params:/usr/local/openresty/nginx/conf/fastcgi_params
+      - ./conf/fastcgi-php.conf:/usr/local/openresty/nginx/conf/fastcgi-php.conf
+      - ./conf/mime.types:/usr/local/openresty/nginx/conf/mime.types
+      - ./conf/default:/usr/local/openresty/nginx/conf/default/
+      - ./conf/ssl:/usr/local/openresty/nginx/conf/ssl/
+      - ./log:/var/log/nginx
+      - ./root:/usr/share/nginx/html
+      - /etc/localtime:/etc/localtime
+      - ./1pwaf/data:/usr/local/openresty/1pwaf/data
       - ${WEBSITE_DIR}:/www
-      - /etc/localtime:/etc/localtime:ro
+      - ${WEBSITE_DIR}/conf.d:/usr/local/openresty/nginx/conf/conf.d/
     labels:
       createdBy: Apps
-networks:
-  1panel-network:
-    external: true
 EOF

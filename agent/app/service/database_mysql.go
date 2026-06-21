@@ -506,7 +506,7 @@ func (u *MysqlService) LoadRemoteAccess(req dto.OperationWithNameAndType) (bool,
 	if err != nil {
 		return false, err
 	}
-	hosts, err := executeSqlForRows(app.ContainerName, app.Key, app.Password, "select host from mysql.user where user='root';")
+	hosts, err := executeSqlForRowsWithRetry(app.ContainerName, app.Key, app.Password, "select host from mysql.user where user='root';", 10, time.Second)
 	if err != nil {
 		return false, err
 	}
@@ -632,6 +632,29 @@ func executeSqlForRows(containerName, dbType, password, command string) ([]strin
 		return nil, errors.New(stdStr)
 	}
 	return strings.Split(stdStr, "\n"), nil
+}
+
+func executeSqlForRowsWithRetry(containerName, dbType, password, command string, attempts int, interval time.Duration) ([]string, error) {
+	return retryRows(attempts, interval, func() ([]string, error) {
+		return executeSqlForRows(containerName, dbType, password, command)
+	})
+}
+
+func retryRows(attempts int, interval time.Duration, query func() ([]string, error)) ([]string, error) {
+	var (
+		rows []string
+		err  error
+	)
+	for attempt := 0; attempt < attempts; attempt++ {
+		rows, err = query()
+		if err == nil {
+			return rows, nil
+		}
+		if attempt+1 < attempts {
+			time.Sleep(interval)
+		}
+	}
+	return nil, err
 }
 
 func updateMyCnf(oldFiles []string, group string, param string, value interface{}) []string {

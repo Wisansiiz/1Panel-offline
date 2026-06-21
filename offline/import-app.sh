@@ -6,6 +6,11 @@ if [[ "${EUID}" -ne 0 ]]; then
     exit 1
 fi
 
+command -v curl >/dev/null 2>&1 || {
+    echo "curl is required to wait for application synchronization" >&2
+    exit 1
+}
+
 if [[ "$#" -ne 1 ]]; then
     echo "usage: 1panel-import-app <bundle-directory>" >&2
     exit 1
@@ -41,4 +46,23 @@ if [[ -d "${BUNDLE_DIR}/images" ]]; then
 fi
 
 systemctl restart 1panel-agent
-echo "custom offline applications imported"
+for _ in $(seq 1 30); do
+    systemctl is-active --quiet 1panel-agent && break
+    sleep 1
+done
+systemctl is-active --quiet 1panel-agent || {
+    echo "1panel-agent failed to restart after importing applications" >&2
+    exit 1
+}
+for _ in $(seq 1 60); do
+    if curl --silent --show-error --max-time 1 \
+        --unix-socket /etc/1panel/agent.sock \
+        http://localhost/ \
+        --output /dev/null 2>/dev/null; then
+        echo "offline applications imported and synchronized"
+        exit 0
+    fi
+    sleep 1
+done
+echo "1panel-agent did not finish synchronizing imported applications" >&2
+exit 1

@@ -32,7 +32,7 @@ esac
 DOCKER_SHA256="${DOCKER_SHA256:-${DEFAULT_DOCKER_SHA256}}"
 COMPOSE_SHA256="${COMPOSE_SHA256:-${DEFAULT_COMPOSE_SHA256}}"
 
-for command in curl docker go npm tar; do
+for command in curl docker go jq npm tar; do
     command -v "${command}" >/dev/null 2>&1 || {
         echo "missing required command: ${command}" >&2
         exit 1

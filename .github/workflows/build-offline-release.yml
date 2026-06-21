@@ -1,7 +1,7 @@
 name: Build Offline Edition
 
 env:
-  OFFLINE_VERSION: "2.0.2"
+  OFFLINE_VERSION: "2.0.3"
 
 on:
   push:
@@ -95,6 +95,7 @@ jobs:
       - name: Build ${{ matrix.arch }} offline bundle
         env:
           BUILD_VERSION: ${{ needs.prepare.outputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./offline/build-bundle.sh "${{ matrix.arch }}"
 
       - name: Validate offline bundle
@@ -116,6 +117,10 @@ jobs:
           test "$(cat "${bundle}/images/images.txt")" = "1panel/openresty:1.27.1.2-2-3-focal"
           test -s "${bundle}/appstore-data.yaml"
           test -f "${bundle}/catalog/openresty/1.27.1.2-2-3-focal/docker-compose.yml"
+          test -f "${bundle}/catalog/openresty/1.27.1.2-2-3-focal/conf/ssl/root_ssl.conf"
+          test -f "${bundle}/catalog/openresty/1.27.1.2-2-3-focal/conf/default/00.default.conf"
+          test -f "${bundle}/catalog/openresty/1.27.1.2-2-3-focal/scripts/init.sh"
+          test ! -d "${bundle}/catalog/openresty/1.27.1.2-2-3-focal/build"
           test ! -e "${bundle}/catalog/mysql"
           if [[ "${{ matrix.arch }}" == "amd64" ]]; then
             "${bundle}/runtime/docker/docker" --version
@@ -182,6 +187,7 @@ jobs:
           sudo docker image inspect \
             1panel/openresty:1.27.1.2-2-3-focal >/dev/null
           test -f /opt/1panel/resource/apps/remote/openresty/1.27.1.2-2-3-focal/docker-compose.yml
+          test -f /opt/1panel/resource/apps/remote/openresty/1.27.1.2-2-3-focal/conf/ssl/root_ssl.conf
           test ! -e /opt/1panel/resource/apps/remote/mysql
           test -f /opt/1panel/resource/offline/data.yaml
 
@@ -235,6 +241,8 @@ jobs:
           docker system prune --all --force
 
       - name: Build ${{ matrix.bundle }} ${{ matrix.arch }} import bundle
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./offline/build-app-bundle.sh "${{ matrix.bundle }}" "${{ matrix.arch }}"
 
       - name: Validate import bundle
@@ -242,6 +250,7 @@ jobs:
         run: |
           bundle="dist/offline-apps/1panel-app-${{ matrix.bundle }}-${{ matrix.version }}-linux-${{ matrix.arch }}"
           test -f "${bundle}/MANIFEST"
+          test -f "${bundle}/data.yaml"
           test -f "${bundle}/SHA256SUMS"
           test -f "${bundle}/apps/"*/data.yml
           test -f "${bundle}/apps/"*/"${{ matrix.version }}"/docker-compose.yml

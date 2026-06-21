@@ -1270,6 +1270,16 @@ func upApp(task *task.Task, appInstall *model.AppInstall, pullImages bool) error
 			task.LogFailedWithErr(logStr, err)
 			return err
 		}
+		if appInstall.App.Key == constant.AppMysql || appInstall.App.Key == constant.AppMariaDB || appInstall.App.Key == constant.AppMysqlCluster {
+			params := make(map[string]interface{})
+			if err = json.Unmarshal([]byte(appInstall.Env), &params); err != nil {
+				return err
+			}
+			password, _ := params["PANEL_DB_ROOT_PASSWORD"].(string)
+			if _, err = executeSqlForRowsWithRetry(appInstall.ContainerName, appInstall.App.Key, password, "select 1;", 30, 2*time.Second); err != nil {
+				return fmt.Errorf("mysql did not become ready: %w", err)
+			}
+		}
 		task.LogSuccess(logStr)
 		return
 	}

@@ -39,6 +39,7 @@ import (
 var (
 	appStoreSyncMu  sync.Mutex
 	appStoreSyncing bool
+	localAppSyncMu  sync.Mutex
 )
 
 type AppService struct {
@@ -70,6 +71,13 @@ func (a AppService) PageApp(ctx *gin.Context, req request.AppSearch) (*response.
 	var opts []repo.DBOption
 	opts = append(opts, appRepo.OrderByRecommend())
 	if global.CONF.Base.IsOffline {
+		req.Resource = constant.AppResourceRemote
+		if req.Type != "" {
+			apps, _ := appRepo.GetBy(appRepo.WithType(req.Type), appRepo.WithResource(constant.AppResourceRemote))
+			if len(apps) == 0 {
+				a.SyncAppListFromLocal("")
+			}
+		}
 		availableIDs, err := a.offlineAvailableAppIDs()
 		if err != nil {
 			return nil, err
@@ -630,6 +638,9 @@ func (a AppService) installWithHooks(req request.AppInstallCreate, executeScript
 }
 
 func (a AppService) SyncAppListFromLocal(TaskID string) {
+	localAppSyncMu.Lock()
+	defer localAppSyncMu.Unlock()
+
 	var (
 		err        error
 		dirEntries []os.DirEntry
@@ -879,9 +890,7 @@ func (a AppService) SyncAppListFromLocal(TaskID string) {
 		global.LOG.Infof("Synchronization of local applications completed")
 		return nil
 	}, nil)
-	go func() {
-		_ = syncTask.Execute()
-	}()
+	_ = syncTask.Execute()
 }
 
 func (a AppService) GetAppUpdate() (*response.AppUpdateRes, error) {

@@ -10,7 +10,11 @@ import (
 )
 
 func Init() {
-	go syncApp()
+	if global.CONF.Base.IsOffline {
+		syncApp()
+	} else {
+		go syncApp()
+	}
 	go syncInstalledApp()
 	go syncRuntime()
 	go syncSSL()

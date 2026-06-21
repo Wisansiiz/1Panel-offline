@@ -128,6 +128,33 @@ echo "pulling ${IMAGE} for linux/${ARCH}"
 docker pull --platform "linux/${ARCH}" "${IMAGE}"
 docker image save -o "${WORK_DIR}/images/${BUNDLE}-${SAFE_VERSION}-${ARCH}.tar" "${IMAGE}"
 
+cat >"${WORK_DIR}/data.yaml" <<'EOF'
+additionalProperties:
+  version: offline
+  tags:
+    - key: Database
+      name: Database
+      sort: 1
+      locales:
+        en: Database
+        zh: 数据库
+        zh-hant: 資料庫
+    - key: Server
+      name: Server
+      sort: 2
+      locales:
+        en: Web Server
+        zh: Web 服务器
+        zh-hant: Web 伺服器
+    - key: Runtime
+      name: Runtime
+      sort: 3
+      locales:
+        en: Runtime
+        zh: 运行环境
+        zh-hant: 執行環境
+EOF
+
 cat >"${WORK_DIR}/MANIFEST" <<EOF
 bundle=${BUNDLE}
 app=${APP}

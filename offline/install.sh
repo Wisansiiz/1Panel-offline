@@ -16,7 +16,7 @@ PANEL_ENTRANCE="${PANEL_ENTRANCE:-$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')}
 PANEL_PORT="${PANEL_PORT:-9999}"
 PANEL_VERSION="${PANEL_VERSION:-$(cat "${PACKAGE_DIR}/VERSION")}"
 
-for command in docker systemctl sha256sum; do
+for command in install sha256sum systemctl uname; do
     command -v "${command}" >/dev/null 2>&1 || {
         echo "missing required command: ${command}" >&2
         exit 1
@@ -25,11 +25,127 @@ done
 
 (cd "${PACKAGE_DIR}" && sha256sum -c SHA256SUMS)
 
+EXPECTED_ARCH="$(cat "${PACKAGE_DIR}/ARCH")"
+case "$(uname -m)" in
+    x86_64) HOST_ARCH="amd64" ;;
+    aarch64|arm64) HOST_ARCH="arm64" ;;
+    *) echo "unsupported host architecture: $(uname -m)" >&2; exit 1 ;;
+esac
+if [[ "${HOST_ARCH}" != "${EXPECTED_ARCH}" ]]; then
+    echo "package architecture ${EXPECTED_ARCH} does not match host ${HOST_ARCH}" >&2
+    exit 1
+fi
+
+install_compose_plugin() {
+    install -d -m 0755 /usr/local/lib/docker/cli-plugins
+    install -m 0755 "${PACKAGE_DIR}/runtime/cli-plugins/docker-compose" \
+        /usr/local/lib/docker/cli-plugins/docker-compose
+}
+
+install_docker_engine() {
+    if ! command -v iptables >/dev/null 2>&1; then
+        echo "iptables is required by Docker but is not installed on this host" >&2
+        echo "install the operating system's iptables compatibility package before continuing" >&2
+        exit 1
+    fi
+
+    for binary in "${PACKAGE_DIR}"/runtime/docker/*; do
+        [[ -f "${binary}" ]] || continue
+        install -m 0755 "${binary}" "/usr/local/bin/$(basename "${binary}")"
+    done
+    install_compose_plugin
+    install -d -m 0755 /etc/docker /var/lib/docker /var/lib/containerd
+
+    cat >/etc/systemd/system/containerd.service <<'EOF'
+[Unit]
+Description=containerd container runtime
+After=network.target local-fs.target
+
+[Service]
+ExecStart=/usr/local/bin/containerd
+Delegate=yes
+KillMode=process
+Restart=always
+RestartSec=5
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    cat >/etc/systemd/system/docker.service <<'EOF'
+[Unit]
+Description=Docker Application Container Engine
+After=network-online.target containerd.service
+Wants=network-online.target
+Requires=containerd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/dockerd --host=unix:///var/run/docker.sock --containerd=/run/containerd/containerd.sock
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=5
+TimeoutStartSec=0
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+Delegate=yes
+KillMode=process
+OOMScoreAdjust=-500
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable --now containerd.service docker.service
+}
+
+wait_for_docker() {
+    local attempt
+    for ((attempt = 1; attempt <= 30; attempt++)); do
+        if docker info >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 1
+    done
+    systemctl --no-pager --full status docker.service || true
+    echo "Docker daemon did not become ready" >&2
+    exit 1
+}
+
+if [[ "${FORCE_BUNDLED_DOCKER:-0}" != "1" ]] \
+    && command -v docker >/dev/null 2>&1 \
+    && command -v dockerd >/dev/null 2>&1 \
+    && systemctl cat docker.service >/dev/null 2>&1; then
+    echo "using existing Docker installation"
+    systemctl enable --now docker.service
+    if ! docker compose version >/dev/null 2>&1; then
+        echo "Docker Compose plugin is missing; installing bundled plugin"
+        install_compose_plugin
+    fi
+else
+    echo "Docker is not installed; installing bundled offline runtime"
+    install_docker_engine
+fi
+wait_for_docker
+docker compose version
+
 install -m 0755 "${PACKAGE_DIR}/bin/1panel-core" /usr/local/bin/1panel-core
 install -m 0755 "${PACKAGE_DIR}/bin/1panel-agent" /usr/local/bin/1panel-agent
+install -m 0755 "${PACKAGE_DIR}/import-app.sh" /usr/local/bin/1panel-import-app
 mkdir -p "${OFFLINE_APP_DIR}" "${PANEL_DIR}/resource/offline" "${PANEL_DIR}/geo" "${PANEL_DIR}/conf"
-cp -R "${PACKAGE_DIR}/catalog/." "${OFFLINE_APP_DIR}/"
-cp "${PACKAGE_DIR}/appstore-data.yaml" "${PANEL_DIR}/resource/offline/data.yaml"
+if find "${PACKAGE_DIR}/catalog" -mindepth 1 -print -quit | grep -q .; then
+    cp -R "${PACKAGE_DIR}/catalog/." "${OFFLINE_APP_DIR}/"
+fi
+if [[ -f "${PACKAGE_DIR}/appstore-data.yaml" ]]; then
+    cp "${PACKAGE_DIR}/appstore-data.yaml" "${PANEL_DIR}/resource/offline/data.yaml"
+fi
 
 cat >"${PANEL_DIR}/conf/app.yaml" <<EOF
 base:
@@ -134,12 +250,10 @@ WantedBy=multi-user.target
 EOF
 
 IMAGE_ARCHIVE="${PACKAGE_DIR}/images/images.tar"
-if [[ ! -f "${IMAGE_ARCHIVE}" ]]; then
-    echo "missing bundled image archive: ${IMAGE_ARCHIVE}" >&2
-    exit 1
+if [[ -f "${IMAGE_ARCHIVE}" ]]; then
+    echo "importing bundled application images"
+    docker image load -i "${IMAGE_ARCHIVE}"
 fi
-echo "importing bundled application images"
-docker image load -i "${IMAGE_ARCHIVE}"
 
 systemctl daemon-reload
 systemctl enable --now 1panel-agent 1panel-core
@@ -149,3 +263,4 @@ echo "URL: http://<server-ip>:${PANEL_PORT}/${PANEL_ENTRANCE}"
 echo "Username: ${PANEL_USERNAME}"
 echo "Password: ${PANEL_PASSWORD}"
 echo "Run '1pctl status' to inspect services."
+echo "Run 'sudo 1panel-import-app <bundle-directory>' to add custom offline applications."

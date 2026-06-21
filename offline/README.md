@@ -5,32 +5,41 @@
 
 离线版默认启用 `is_offline`，不会自动同步远程应用商店、检查在线升级、访问在线文档索引、同步公网 NTP、下载语言/GeoIP 资源或发送安装统计。应用启动使用 `docker compose --pull never`，镜像拉取 API 也会被服务端拒绝。
 
-## 内置镜像
+标准离线包内置 Docker Engine 29.6.0、配套的 containerd/runc，以及 Docker Compose 2.40.3。目标服务器没有 Docker 时，安装程序会自动安装并启动离线运行时。
+
+## 应用商店策略
+
+标准离线包不内置应用目录，首次安装后的应用商店为空。包内仍预置以下基础镜像：
 
 - OpenResty：`1panel/openresty:1.27.1.2-2-3-focal`
 - MySQL x86_64：`8.4.6`、`8.0.43`、`5.7.44`、`5.6.51`
 - MySQL arm64：`8.4.6`、`8.0.43`
 
-## 准备应用目录
+用户导入对应的 OpenResty/MySQL 应用定义后，可以直接使用预置镜像，不需要再次导入镜像。其他应用需要同时准备应用定义和镜像。
 
-构建脚本默认从官方 `https://github.com/1Panel-dev/appstore.git` 获取完整社区应用目录和标签数据。也可以提前把仓库的 `apps/` 与 `data.yaml` 放入 `offline/catalog/`，避免构建时重复下载：
+制作自定义发行包时，可以把应用定义放入：
 
 ```text
 offline/catalog/apps/
-├── mysql/
+├── redis/
 │   ├── data.yml
 │   ├── logo.png
 │   ├── README.md
-│   ├── 8.4.6/
+│   ├── 7.4.2/
 │   │   ├── data.yml
 │   │   └── docker-compose.yml
 │   └── ...
-└── openresty/
-    └── ...
 offline/catalog/data.yaml
 ```
 
-面板会按官方应用 key 导入完整社区应用目录，因此 OpenResty、MySQL 等仍会自动集成网站和数据库菜单。应用商店根据当前 Docker 中已有的镜像动态过滤应用：导入一个应用所需的全部镜像后，该应用会自动出现；未导入镜像的应用保持隐藏。
+其他应用的镜像可以继续加入 `offline/images.tsv`：
+
+```text
+amd64	redis:7.4.2-alpine
+arm64	redis:7.4.2-alpine
+```
+
+只有应用定义和所需镜像都已导入时，应用才会在离线应用商店中显示。
 
 ## 在线构建机制作离线包
 
@@ -39,9 +48,9 @@ offline/catalog/data.yaml
 ./offline/build-bundle.sh arm64
 ```
 
-输出位于 `dist/offline/`。构建机需要 Node.js、Go、Docker，并允许访问 npm、Go modules 和镜像仓库。
+输出位于 `dist/offline/`。构建机需要 Node.js、Go、Docker、curl，并允许访问 npm、Go modules、镜像仓库、Docker 官方下载站和 GitHub。
 
-同一架构的全部内置镜像会合并保存为 `images/images.tar`。Docker 的共享镜像层只写入一次，避免按镜像分别导出时重复占用离线包空间。`images/images.txt` 记录该包内包含的完整镜像列表。
+全部预置镜像会合并保存为 `images/images.tar`，共享镜像层只写入一次。
 
 也可以直接使用 GitHub Actions：
 
@@ -64,14 +73,30 @@ cd 1panel-offline-linux-amd64
 sudo ./install.sh
 ```
 
-安装程序会校验文件、安装 core/agent、复制本地应用目录、一次性导入 `images/images.tar`，并启动 systemd 服务。
+安装程序会校验文件和 CPU 架构，缺少 Docker 时自动安装包内运行时，然后安装 core/agent 并启动 systemd 服务。宿主机需要 Linux、systemd 和 iptables。
 
-## 导入其他应用镜像
+## 安装后增加应用
 
-可通过 1Panel「容器 → 镜像 → 导入镜像」或命令行导入：
+准备一个目录：
 
-```bash
-docker image load -i application-images.tar
+```text
+redis-bundle/
+├── apps/
+│   └── redis/
+│       ├── data.yml
+│       ├── logo.png
+│       └── 7.4.2/
+│           ├── data.yml
+│           └── docker-compose.yml
+├── data.yaml
+└── images/
+    └── redis-7.4.2.tar
 ```
 
-刷新应用商店后，镜像齐全的应用会显示并可安装。应用定义仍需预先包含在离线包的完整社区应用目录中。
+复制到离线服务器并执行：
+
+```bash
+sudo 1panel-import-app ./redis-bundle
+```
+
+导入工具会复制应用定义、加载 `images/*.tar`，并重启 Agent 触发本地应用目录同步。

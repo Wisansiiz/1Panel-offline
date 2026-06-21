@@ -78,6 +78,28 @@ jobs:
           BUILD_VERSION: ${{ needs.prepare.outputs.version }}
         run: ./offline/build-bundle.sh "${{ matrix.arch }}"
 
+      - name: Validate offline bundle
+        shell: bash
+        run: |
+          bundle="dist/offline/1panel-offline-${{ needs.prepare.outputs.version }}-linux-${{ matrix.arch }}"
+          test -x "${bundle}/bin/1panel-core"
+          test -x "${bundle}/bin/1panel-agent"
+          test -x "${bundle}/runtime/docker/docker"
+          test -x "${bundle}/runtime/docker/dockerd"
+          test -x "${bundle}/runtime/docker/containerd"
+          test -x "${bundle}/runtime/docker/runc"
+          test -x "${bundle}/runtime/cli-plugins/docker-compose"
+          test -s "${bundle}/images/images.tar"
+          test ! -e "${bundle}/appstore-data.yaml"
+          test -z "$(find "${bundle}/catalog" -mindepth 1 -print -quit)"
+          if [[ "${{ matrix.arch }}" == "amd64" ]]; then
+            "${bundle}/runtime/docker/docker" --version
+            "${bundle}/runtime/docker/dockerd" --version
+            "${bundle}/runtime/docker/containerd" --version
+            "${bundle}/runtime/docker/runc" --version
+            "${bundle}/runtime/cli-plugins/docker-compose" version
+          fi
+
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4
         with:
@@ -87,10 +109,60 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+  install-smoke:
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: 1panel-offline-${{ needs.prepare.outputs.version }}-linux-amd64
+          path: smoke
+
+      - name: Extract bundle
+        shell: bash
+        run: |
+          tar -xzf smoke/1panel-offline-${{ needs.prepare.outputs.version }}-linux-amd64.tar.gz -C smoke
+
+      - name: Install with bundled Docker runtime
+        shell: bash
+        run: |
+          sudo systemctl disable --now docker.socket docker.service containerd.service || true
+          bundle="smoke/1panel-offline-${{ needs.prepare.outputs.version }}-linux-amd64"
+          sudo env \
+            FORCE_BUNDLED_DOCKER=1 \
+            PANEL_USERNAME=offline-smoke \
+            PANEL_PASSWORD=offline-smoke-password \
+            PANEL_ENTRANCE=offline-smoke \
+            PANEL_PORT=19999 \
+            "${bundle}/install.sh"
+
+      - name: Verify offline installation
+        shell: bash
+        run: |
+          sleep 5
+          sudo systemctl is-active --quiet containerd.service
+          sudo systemctl is-active --quiet docker.service
+          sudo systemctl is-active --quiet 1panel-agent.service
+          sudo systemctl is-active --quiet 1panel-core.service
+          sudo docker info
+          sudo docker compose version
+          sudo docker image inspect \
+            1panel/openresty:1.27.1.2-2-3-focal \
+            mysql:8.4.6 \
+            mysql:8.0.43 \
+            mysql:5.7.44 \
+            mysql:5.6.51 >/dev/null
+          test -z "$(sudo find /opt/1panel/resource/apps/remote -mindepth 1 -print -quit)"
+          test ! -e /opt/1panel/resource/offline/data.yaml
+
   release:
     needs:
       - prepare
       - build
+      - install-smoke
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4
@@ -116,6 +188,9 @@ jobs:
           generate_release_notes: true
           body: |
             非官方 1Panel 社区版离线修改版。
+
+            包内包含 Docker Engine、containerd、runc、Docker Compose
+            以及 OpenResty/MySQL 基础镜像，不包含应用目录。
 
             下载对应架构的 `.tar.gz` 文件后执行：
 

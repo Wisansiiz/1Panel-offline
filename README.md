@@ -11,9 +11,9 @@
 
 This edition is designed for enterprise intranets, isolated data centers and
 other air-gapped environments. Runtime services default to offline mode and
-block automatic internet access. The complete community application catalog
-is packaged locally, while applications become installable only after all
-required container images exist on the host.
+block automatic internet access. Standard releases include the Docker runtime
+and selected OpenResty/MySQL images, but intentionally contain no application
+catalog.
 
 [中文说明](docs/README.zh-Hans.md) · [Offline build and deployment guide](offline/README.md)
 
@@ -23,8 +23,10 @@ required container images exist on the host.
   online documentation indexes, language/GeoIP downloads and anonymous
   installation analytics.
 - Prevents Docker image pulls and starts Compose projects with `--pull never`.
-- Includes the full community app metadata while dynamically showing apps
-  whose images have been imported.
+- Installs bundled Docker Engine, containerd, runc and Docker Compose when the
+  target host has no Docker installation.
+- Starts with an empty app store; users import only the application definitions
+  and images required by their environment.
 - Builds reproducible `linux/amd64` and `linux/arm64` offline bundles.
 - Installs systemd network restrictions that only permit loopback and private
   network ranges.
@@ -35,6 +37,8 @@ Prepackaged images:
 |---|---|---|
 | OpenResty | `1.27.1.2-2-3-focal` | `1.27.1.2-2-3-focal` |
 | MySQL | `8.4.6`, `8.0.43`, `5.7.44`, `5.6.51` | `8.4.6`, `8.0.43` |
+
+Bundled runtime: Docker Engine `29.6.0` and Docker Compose `2.40.3`.
 
 ## Downloads and automated builds
 

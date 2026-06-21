@@ -1,7 +1,7 @@
 name: Build Offline Edition
 
 env:
-  OFFLINE_VERSION: "2.0.1"
+  OFFLINE_VERSION: "2.0.2"
 
 on:
   push:

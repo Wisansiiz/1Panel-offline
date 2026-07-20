@@ -198,7 +198,7 @@ jobs:
           sudo 1panel-uninstall --yes --keep-data
           test -f /opt/1panel/db/core.db
           test -f /opt/1panel/offline-install.env
-          test -f /var/lib/1panel-offline/install.env
+          sudo test -f /var/lib/1panel-offline/install.env
           test ! -e /usr/local/bin/1panel-core
           sudo systemctl is-active --quiet docker.service
           sudo env \
@@ -218,7 +218,7 @@ jobs:
           sudo 1panel-uninstall --yes
           test ! -e /opt/1panel
           test ! -e /etc/1panel
-          test ! -e /var/lib/1panel-offline/install.env
+          sudo test ! -e /var/lib/1panel-offline/install.env
           test ! -e /var/lib/docker
           test ! -e /var/lib/containerd
           test ! -e /usr/local/bin/1panel-core

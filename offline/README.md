@@ -253,7 +253,10 @@ sudo systemctl is-active 1panel-agent
 
 ## 卸载离线版
 
-默认停止由应用商店管理的容器，卸载面板程序，并保留 `/opt/1panel` 下的数据和 Docker：
+默认执行完整卸载：删除面板服务、程序、`/opt/1panel` 下的全部数据、
+1Panel 管理的容器和已记录的离线镜像。如果 Docker/containerd 是由离线包安装的，
+还会一并删除 Docker/containerd 程序及 `/var/lib/docker`、`/var/lib/containerd`
+中的运行数据：
 
 ```bash
 sudo 1panel-uninstall
@@ -261,16 +264,28 @@ sudo 1panel-uninstall
 sudo 1pctl uninstall
 ```
 
-删除全部 1Panel 数据：
+该操作不可恢复，执行前会显示实际删除范围并要求确认。安装 1Panel 前已经存在的
+Docker 不会被卸载；此时只清理 1Panel 管理的容器、Compose 资源和已记录的离线镜像。
+
+如果只是暂时卸载面板程序，稍后还要使用原数据重新安装，请同时保留 1Panel 数据
+和 Docker：
 
 ```bash
-sudo 1panel-uninstall --purge-data
+sudo 1panel-uninstall --keep-data
 ```
 
-如果 Docker 是由该离线包安装的，可同时删除 Docker/containerd 程序：
+重新安装时会识别已有数据库，保留原用户名、端口和安全入口。可用下面的命令读取
+数据库中的当前访问地址：
 
 ```bash
-sudo 1panel-uninstall --remove-docker
+sudo 1pctl user-info
 ```
 
-卸载脚本不会删除安装前已经存在的 Docker。
+如果要删除全部 1Panel 数据，但保留离线包安装的 Docker 供其他程序继续使用：
+
+```bash
+sudo 1panel-uninstall --keep-docker
+```
+
+旧参数 `--purge-data` 和 `--remove-docker` 仍可使用，但完整清理已是默认行为，
+通常不再需要显式指定。

@@ -21,6 +21,16 @@ BASE_DIR="${BASE_DIR:-/opt}"
 PANEL_DIR="${BASE_DIR}/1panel"
 APP_DIR="${PANEL_DIR}/resource/apps/remote"
 OFFLINE_DIR="${PANEL_DIR}/resource/offline"
+MANAGED_IMAGES_FILE="${OFFLINE_DIR}/images.txt"
+
+record_managed_image() {
+    local image_name="$1"
+    [[ -n "${image_name}" ]] || return 0
+    touch "${MANAGED_IMAGES_FILE}"
+    if ! grep -Fqx "${image_name}" "${MANAGED_IMAGES_FILE}"; then
+        printf '%s\n' "${image_name}" >>"${MANAGED_IMAGES_FILE}"
+    fi
+}
 
 if [[ ! -d "${BUNDLE_DIR}/apps" ]]; then
     echo "missing apps directory: ${BUNDLE_DIR}/apps" >&2
@@ -41,8 +51,22 @@ if [[ -d "${BUNDLE_DIR}/images" ]]; then
     for archive in "${BUNDLE_DIR}"/images/*.tar; do
         [[ -f "${archive}" ]] || continue
         echo "importing $(basename "${archive}")"
-        docker image load -i "${archive}"
+        load_output="$(docker image load -i "${archive}")"
+        printf '%s\n' "${load_output}"
+        while IFS= read -r output_line; do
+            case "${output_line}" in
+                "Loaded image: "*) record_managed_image "${output_line#Loaded image: }" ;;
+                "Loaded image ID: "*) record_managed_image "${output_line#Loaded image ID: }" ;;
+            esac
+        done <<<"${load_output}"
     done
+fi
+if [[ -f "${BUNDLE_DIR}/MANIFEST" ]]; then
+    while IFS='=' read -r manifest_key manifest_value; do
+        if [[ "${manifest_key}" == "image" ]]; then
+            record_managed_image "${manifest_value}"
+        fi
+    done <"${BUNDLE_DIR}/MANIFEST"
 fi
 
 systemctl restart 1panel-agent

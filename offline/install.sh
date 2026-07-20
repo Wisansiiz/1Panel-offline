@@ -10,16 +10,72 @@ PACKAGE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="${BASE_DIR:-/opt}"
 PANEL_DIR="${BASE_DIR}/1panel"
 OFFLINE_APP_DIR="${PANEL_DIR}/resource/apps/remote"
+OFFLINE_STATE_DIR="/var/lib/1panel-offline"
+DOCKER_STATE_FILE="${OFFLINE_STATE_DIR}/install.env"
+MANAGED_IMAGES_FILE="${PANEL_DIR}/resource/offline/images.txt"
 PANEL_USERNAME="${PANEL_USERNAME:-admin}"
 PANEL_PASSWORD="${PANEL_PASSWORD:-$(od -An -N12 -tx1 /dev/urandom | tr -d ' \n')}"
 PANEL_ENTRANCE="${PANEL_ENTRANCE:-$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')}"
 PANEL_PORT="${PANEL_PORT:-9999}"
 PANEL_VERSION="${PANEL_VERSION:-$(cat "${PACKAGE_DIR}/VERSION")}"
 BUNDLED_DOCKER_INSTALLED=0
-if [[ -f "${PANEL_DIR}/offline-install.env" ]]; then
-    # shellcheck disable=SC1090
-    source "${PANEL_DIR}/offline-install.env"
+BUNDLED_COMPOSE_INSTALLED=0
+COMPOSE_STATE_FOUND=0
+EXISTING_PANEL_DATA=0
+if [[ -f "${PANEL_DIR}/db/core.db" ]]; then
+    EXISTING_PANEL_DATA=1
 fi
+
+read_state_flag() {
+    local file="$1"
+    local key="$2"
+    [[ -f "${file}" ]] || return 0
+    awk -F= -v wanted="${key}" '
+        $1 == wanted && ($2 == "0" || $2 == "1") { value = $2 }
+        END { if (value != "") print value }
+    ' "${file}"
+}
+
+for state_file in "${PANEL_DIR}/offline-install.env" "${DOCKER_STATE_FILE}"; do
+    if [[ "$(read_state_flag "${state_file}" BUNDLED_DOCKER_INSTALLED)" == "1" ]]; then
+        BUNDLED_DOCKER_INSTALLED=1
+    fi
+    compose_state="$(read_state_flag "${state_file}" BUNDLED_COMPOSE_INSTALLED)"
+    if [[ -n "${compose_state}" ]]; then
+        COMPOSE_STATE_FOUND=1
+        if [[ "${compose_state}" == "1" ]]; then
+            BUNDLED_COMPOSE_INSTALLED=1
+        fi
+    fi
+done
+if [[ "${BUNDLED_DOCKER_INSTALLED}" == "1" && "${COMPOSE_STATE_FOUND}" == "0" ]]; then
+    BUNDLED_COMPOSE_INSTALLED=1
+fi
+# Recover ownership after the old uninstaller deleted offline-install.env while
+# leaving the bundled runtime behind. Requiring both an offline panel config
+# and the exact static-runtime units avoids claiming a normal system Docker.
+legacy_bundled_docker_detected() {
+    [[ -f "${PANEL_DIR}/conf/app.yaml" \
+        && -f /etc/systemd/system/docker.service \
+        && -f /etc/systemd/system/containerd.service ]] || return 1
+    grep -Eq '^[[:space:]]*is_offline:[[:space:]]*true[[:space:]]*$' "${PANEL_DIR}/conf/app.yaml" \
+        && grep -Fq 'ExecStart=/usr/local/bin/dockerd --host=unix:///var/run/docker.sock --containerd=/run/containerd/containerd.sock' /etc/systemd/system/docker.service \
+        && grep -Fq 'ExecStart=/usr/local/bin/containerd' /etc/systemd/system/containerd.service
+}
+if [[ "${BUNDLED_DOCKER_INSTALLED}" == "0" ]] && legacy_bundled_docker_detected; then
+    echo "detected bundled Docker left by an earlier offline uninstall"
+    BUNDLED_DOCKER_INSTALLED=1
+    BUNDLED_COMPOSE_INSTALLED=1
+fi
+
+record_managed_image() {
+    local image_name="$1"
+    [[ -n "${image_name}" ]] || return 0
+    touch "${MANAGED_IMAGES_FILE}"
+    if ! grep -Fqx "${image_name}" "${MANAGED_IMAGES_FILE}"; then
+        printf '%s\n' "${image_name}" >>"${MANAGED_IMAGES_FILE}"
+    fi
+}
 
 for command in install sha256sum systemctl uname; do
     command -v "${command}" >/dev/null 2>&1 || {
@@ -42,6 +98,7 @@ if [[ "${HOST_ARCH}" != "${EXPECTED_ARCH}" ]]; then
 fi
 
 install_compose_plugin() {
+    BUNDLED_COMPOSE_INSTALLED=1
     install -d -m 0755 /usr/local/lib/docker/cli-plugins
     install -m 0755 "${PACKAGE_DIR}/runtime/cli-plugins/docker-compose" \
         /usr/local/lib/docker/cli-plugins/docker-compose
@@ -63,6 +120,7 @@ install_docker_engine() {
     install -d -m 0755 /etc/docker /var/lib/docker /var/lib/containerd
 
     cat >/etc/systemd/system/containerd.service <<'EOF'
+# Managed-By: 1Panel-Offline
 [Unit]
 Description=containerd container runtime
 After=network.target local-fs.target
@@ -83,6 +141,7 @@ WantedBy=multi-user.target
 EOF
 
     cat >/etc/systemd/system/docker.service <<'EOF'
+# Managed-By: 1Panel-Offline
 [Unit]
 Description=Docker Application Container Engine
 After=network-online.target containerd.service
@@ -224,7 +283,10 @@ if [[ -f "${PACKAGE_DIR}/appstore-data.yaml" ]]; then
     cp "${PACKAGE_DIR}/appstore-data.yaml" "${PANEL_DIR}/resource/offline/data.yaml"
 fi
 
-cat >"${PANEL_DIR}/conf/app.yaml" <<EOF
+if [[ "${EXISTING_PANEL_DATA}" == "1" && -f "${PANEL_DIR}/conf/app.yaml" ]]; then
+    echo "existing 1Panel database detected; preserving its configuration and security entrance"
+else
+    cat >"${PANEL_DIR}/conf/app.yaml" <<EOF
 base:
   install_dir: ${BASE_DIR}
   mode: dev
@@ -251,11 +313,21 @@ log:
   log_suffix: .log
   max_backup: 10
 EOF
-chmod 0600 "${PANEL_DIR}/conf/app.yaml"
+    chmod 0600 "${PANEL_DIR}/conf/app.yaml"
+fi
 cat >"${PANEL_DIR}/offline-install.env" <<EOF
 BUNDLED_DOCKER_INSTALLED=${BUNDLED_DOCKER_INSTALLED}
+BUNDLED_COMPOSE_INSTALLED=${BUNDLED_COMPOSE_INSTALLED}
 EOF
 chmod 0600 "${PANEL_DIR}/offline-install.env"
+if [[ "${BUNDLED_DOCKER_INSTALLED}" == "1" || "${BUNDLED_COMPOSE_INSTALLED}" == "1" ]]; then
+    install -d -m 0700 "${OFFLINE_STATE_DIR}"
+    cat >"${DOCKER_STATE_FILE}" <<EOF
+BUNDLED_DOCKER_INSTALLED=${BUNDLED_DOCKER_INSTALLED}
+BUNDLED_COMPOSE_INSTALLED=${BUNDLED_COMPOSE_INSTALLED}
+EOF
+    chmod 0600 "${DOCKER_STATE_FILE}"
+fi
 
 cat >/usr/local/bin/1pctl <<EOF
 #!/usr/bin/env bash
@@ -272,12 +344,7 @@ case "\${1:-}" in
     restart) systemctl restart 1panel-agent 1panel-core ;;
     status) systemctl status 1panel-agent 1panel-core ;;
     uninstall) exec /usr/local/bin/1panel-uninstall "\${@:2}" ;;
-    user-info)
-        echo "username: ${PANEL_USERNAME}"
-        echo "password: ${PANEL_PASSWORD}"
-        echo "port: ${PANEL_PORT}"
-        echo "entrance: ${PANEL_ENTRANCE}"
-        ;;
+    user-info) exec /usr/local/bin/1panel-core --language "\${LANGUAGE}" user-info ;;
     *) echo "usage: 1pctl {start|stop|restart|status|user-info|uninstall}" ;;
 esac
 EOF
@@ -335,6 +402,11 @@ IMAGE_ARCHIVE="${PACKAGE_DIR}/images/images.tar"
 if [[ -f "${IMAGE_ARCHIVE}" ]]; then
     echo "importing bundled application images"
     docker image load -i "${IMAGE_ARCHIVE}"
+    if [[ -f "${PACKAGE_DIR}/images/images.txt" ]]; then
+        while IFS= read -r image_name; do
+            record_managed_image "${image_name}"
+        done <"${PACKAGE_DIR}/images/images.txt"
+    fi
 fi
 
 systemctl daemon-reload
@@ -342,8 +414,13 @@ systemctl enable --now 1panel-agent 1panel-core
 
 echo "1Panel offline edition installed."
 echo "Bundled OpenResty will appear after the local app catalog finishes syncing."
-echo "URL: http://<server-ip>:${PANEL_PORT}/${PANEL_ENTRANCE}"
-echo "Username: ${PANEL_USERNAME}"
-echo "Password: ${PANEL_PASSWORD}"
+if [[ "${EXISTING_PANEL_DATA}" == "1" ]]; then
+    echo "Existing account, port and security entrance were retained from the database."
+    echo "Run 'sudo 1pctl user-info' to display the current access address."
+else
+    echo "URL: http://<server-ip>:${PANEL_PORT}/${PANEL_ENTRANCE}"
+    echo "Username: ${PANEL_USERNAME}"
+    echo "Password: ${PANEL_PASSWORD}"
+fi
 echo "Run '1pctl status' to inspect services."
 echo "Run 'sudo 1panel-import-app <bundle-directory>' to add custom offline applications."

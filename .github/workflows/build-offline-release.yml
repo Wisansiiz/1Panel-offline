@@ -1,7 +1,7 @@
 name: Build Offline Edition
 
 env:
-  OFFLINE_VERSION: "2.0.3"
+  OFFLINE_VERSION: "2.0.4"
 
 on:
   push:
@@ -191,6 +191,44 @@ jobs:
           test ! -e /opt/1panel/resource/apps/remote/mysql
           test -f /opt/1panel/resource/offline/data.yaml
 
+      - name: Verify preserved-data reinstall keeps the security entrance
+        shell: bash
+        run: |
+          bundle="smoke/1panel-offline-${{ needs.prepare.outputs.version }}-linux-amd64"
+          sudo 1panel-uninstall --yes --keep-data
+          test -f /opt/1panel/db/core.db
+          test -f /opt/1panel/offline-install.env
+          test -f /var/lib/1panel-offline/install.env
+          test ! -e /usr/local/bin/1panel-core
+          sudo systemctl is-active --quiet docker.service
+          sudo env \
+            PANEL_USERNAME=must-not-replace-existing \
+            PANEL_PASSWORD=must-not-replace-existing \
+            PANEL_ENTRANCE=must-not-replace-existing \
+            PANEL_PORT=29999 \
+            "${bundle}/install.sh"
+          sleep 5
+          sudo 1pctl user-info | grep -q '/offline-smoke '
+          curl -fsSI http://127.0.0.1:19999/offline-smoke \
+            | grep -qi '^Content-Security-Policy:'
+
+      - name: Verify complete uninstall
+        shell: bash
+        run: |
+          sudo 1panel-uninstall --yes
+          test ! -e /opt/1panel
+          test ! -e /etc/1panel
+          test ! -e /var/lib/1panel-offline/install.env
+          test ! -e /var/lib/docker
+          test ! -e /var/lib/containerd
+          test ! -e /usr/local/bin/1panel-core
+          test ! -e /usr/local/bin/1panel-agent
+          test ! -e /usr/local/bin/dockerd
+          test ! -e /usr/local/lib/docker/cli-plugins/docker-compose
+          ! sudo systemctl is-active --quiet 1panel-core.service
+          ! sudo systemctl is-active --quiet 1panel-agent.service
+          ! sudo systemctl is-active --quiet docker.service
+
   app-bundles:
     needs: prepare
     strategy:
@@ -301,23 +339,79 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.version }}
-          name: 1Panel Offline ${{ needs.prepare.outputs.version }}
+          name: 1Panel 完整离线版 ${{ needs.prepare.outputs.version }}（非官方修改版）
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
           body: |
-            非官方 1Panel 社区版离线修改版。
+            ## 版本定位
 
-            包内包含 Docker Engine、containerd、runc、Docker Compose
-            以及 OpenResty 基础镜像和对应应用定义。
-            Release 同时提供 MySQL 8、MySQL 5、Redis、Java 8、
-            Java 17的独立离线导入包。
+            这是基于 1Panel 社区版制作的**非官方完整离线修改版**，面向企业内网、
+            离线机房及其他无法访问公网的环境。安装和运行期间不依赖互联网，
+            不主动发送公网请求，并限制应用容器访问公网。
 
-            下载对应架构的 `.tar.gz` 文件后执行：
+            AI 模块未包含在离线版中。
+
+            ## 本版本改进
+
+            - 修复 OpenResty 首次安装缺少 SSL 配置目录的问题。
+            - 等待 MySQL 真正就绪后再显示连接信息，避免首次连接出现 socket 错误。
+            - 修复 Java 等外部运行环境导入后不出现在运行环境列表的问题。
+            - 默认卸载现在会完整清理 1Panel 数据及离线包安装的 Docker 运行时。
+            - 保留数据重装时继续使用数据库中的原安全入口，避免入口地址不一致。
+            - 记录离线导入镜像，使用系统原有 Docker 时也能准确清理 1Panel 资源。
+
+            ## 包含内容
+
+            基础离线包同时提供 `amd64` 和 `arm64` 版本，内含：
+
+            - 1Panel Core 与 Agent（Agent 是面板后端服务，不是 AI Agent）
+            - Docker Engine 29.6.0
+            - containerd、runc 与 Docker Compose 2.40.3
+            - OpenResty 1.27.1.2-2-3-focal 镜像及完整应用定义
+
+            MySQL、Redis 和 Java 不放入基础包，可按需下载独立导入包：
+
+            | 导入包 | 版本 | 架构 |
+            | --- | --- | --- |
+            | MySQL 8 | 8.4.10 | amd64、arm64 |
+            | MySQL 5 | 5.7.44 | amd64 |
+            | Redis | 7.4.9 | amd64、arm64 |
+            | Java 8 | 1.8 | amd64、arm64 |
+            | Java 17 | 17 | amd64、arm64 |
+
+            ## 安装方法
+
+            下载与服务器架构一致的基础包和 `SHA256SUMS`，校验后安装：
 
             ```bash
-            sha256sum -c SHA256SUMS
-            tar -xzf 1panel-offline-*-linux-amd64.tar.gz
+            sha256sum --ignore-missing -c SHA256SUMS
+            tar -xzf 1panel-offline-${{ needs.prepare.outputs.version }}-linux-amd64.tar.gz
+            cd 1panel-offline-${{ needs.prepare.outputs.version }}-linux-amd64
+            sudo ./install.sh
             ```
+
+            ARM64 服务器请将命令中的 `amd64` 替换为 `arm64`。目标系统需要 Linux、
+            systemd 和 iptables 兼容包。
+
+            导入可选应用包，以 Redis 为例：
+
+            ```bash
+            tar -xzf 1panel-app-redis-7.4.9-linux-amd64.tar.gz
+            sudo 1panel-import-app ./1panel-app-redis-7.4.9-linux-amd64
+            ```
+
+            ## 卸载
+
+            ```bash
+            # 完整卸载，包括 1Panel 数据和离线包安装的 Docker
+            sudo 1panel-uninstall
+
+            # 暂时卸载程序，保留数据和 Docker 供稍后重装
+            sudo 1panel-uninstall --keep-data
+            ```
+
+            安装前已经存在的系统 Docker 不会被卸载。所有发布附件的校验值均汇总在
+            `SHA256SUMS` 中。
           files: |
             release/*.tar.gz
             release/SHA256SUMS
